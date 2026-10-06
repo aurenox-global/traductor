@@ -398,7 +398,12 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
 
     private suspend fun ensureModels() {
         // Variante FULL: copia una sola vez los modelos incluidos en el APK.
-        if (BundledAssets.enabled && BundledAssets.available(this)) {
+        // `probe()` deja registrado (de forma PERSISTENTE) la variante, si el manifest
+        // bundleado se pudo abrir y el espacio libre, aunque luego no se copie nada.
+        val bundledOk = if (BundledAssets.enabled) BundledAssets.probe(this) else false
+        SeedingLog.note(this, "ensureModels: enabled=${BundledAssets.enabled} probe=$bundledOk")
+
+        if (bundledOk && BundledAssets.available(this)) {
             setStatus("Copiando modelos incluidos en la APK…")
             b.progressDownload.visibility = View.VISIBLE
             withContext(Dispatchers.IO) {
@@ -410,10 +415,22 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
                     )
                     BundledAssets.applyDefaults(this@MainActivity)
                 } catch (t: Throwable) {
-                    runOnUiThread { setStatus("No se pudieron copiar los modelos incluidos (${t.message}). Se intentará descargar.") }
+                    // El diagnóstico persistente guarda el fallo COMPLETO; el mensaje de
+                    // la descarga de respaldo que viene después NO lo pisa.
+                    SeedingLog.recordError(this@MainActivity, "ensureModels/copy", t)
+                    runOnUiThread {
+                        setStatus("No se pudieron copiar los modelos incluidos (${t.message}). Se intentará descargar.")
+                    }
                 }
             }
             b.progressDownload.visibility = View.GONE
+        } else if (BundledAssets.enabled) {
+            // Flag activo pero el manifest bundleado no se pudo abrir: causa raíz probable.
+            SeedingLog.recordError(
+                this,
+                "ensureModels/manifest",
+                IllegalStateException("assets.open(\"bundled/manifest.json\") no disponible (available()=false)")
+            )
         }
 
         val pending = ModelManager.FIRST_RUN.filter { !ModelManager.isPresent(this, it) } +
@@ -430,6 +447,7 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
                         runOnUiThread { setDownloadProgress(done, total) }
                     }
                 } catch (t: Throwable) {
+                    SeedingLog.recordDownloadError(this@MainActivity, t)
                     runOnUiThread { setStatus("Fallo descargando ${spec.label}: ${t.message}") }
                     return@withContext
                 }

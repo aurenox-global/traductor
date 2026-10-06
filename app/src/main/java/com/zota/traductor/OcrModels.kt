@@ -113,7 +113,11 @@ object OcrModels {
     ): Boolean {
         // Variante FULL: los modelos (si van en el APK) se copian en vez de descargar.
         if (BundledAssets.enabled && BundledAssets.available(ctx)) {
-            runCatching { BundledAssets.ensureAll(ctx, onStatus, onProgress, onlyPrefix = "files/") }
+            try {
+                BundledAssets.ensureAll(ctx, onStatus, onProgress, onlyPrefix = "files/")
+            } catch (t: Throwable) {
+                SeedingLog.recordError(ctx, "ocr/ensureAll", t)
+            }
         }
         for (spec in DOWNLOADS) {
             if (isPresent(ctx, spec)) continue

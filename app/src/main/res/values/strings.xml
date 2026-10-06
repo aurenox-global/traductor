@@ -97,4 +97,7 @@
     <string name="settings_credit">Creado por %1$s · Cuba</string>
     <string name="settings_credit_author">Andres Mag</string>
     <string name="settings_footer_note">100% offline · la primera descarga requiere conexión</string>
+    <string name="settings_diag_title">Diagnóstico offline</string>
+    <string name="settings_diag_desc">Resultado del copiado de los modelos incluidos en la APK. Se guarda en el dispositivo y no se pisa con el estado de las descargas.</string>
+    <string name="settings_diag_refresh">Actualizar diagnóstico</string>
 </resources>

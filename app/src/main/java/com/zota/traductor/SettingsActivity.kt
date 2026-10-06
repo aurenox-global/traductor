@@ -70,6 +70,11 @@ class SettingsActivity : AppCompatActivity() {
             ModelPrefs.setPiperEnabled(this, checked)
         }
 
+        b.btnDiagRefresh.setOnClickListener {
+            b.txtDiag.text = SeedingLog.format(this)
+            setStatus("Diagnóstico actualizado")
+        }
+
         bindAbout()
         refresh()
     }
@@ -150,6 +155,9 @@ class SettingsActivity : AppCompatActivity() {
 
         // --- Piper ---
         refreshPiper()
+
+        // --- Diagnóstico offline (seeding) ---
+        b.txtDiag.text = SeedingLog.format(this)
 
         setStatus("Modelo de voz activo: ${ModelManager.resolveAsr(this)?.name ?: "ninguno"}")
     }

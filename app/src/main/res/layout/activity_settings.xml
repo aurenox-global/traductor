@@ -193,6 +193,50 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- ===== Diagnóstico offline (seeding) ===== -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="28dp"
+                android:background="@color/panel_stroke" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/settings_diag_title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/settings_diag_desc"
+                android:textSize="12sp"
+                android:textColor="@color/muted" />
+
+            <TextView
+                android:id="@+id/txtDiag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="10dp"
+                android:background="@color/panel"
+                android:fontFamily="monospace"
+                android:textIsSelectable="true"
+                android:textSize="14sp"
+                android:textColor="@color/on_panel" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDiagRefresh"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/settings_diag_refresh" />
+
             <!-- ===== Acerca de / créditos ===== -->
             <View
                 android:layout_width="match_parent"
