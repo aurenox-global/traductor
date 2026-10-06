@@ -11,7 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import java.io.File
-
 class CoreTest {
 
     @Test
@@ -489,8 +488,7 @@ class CoreTest {
     }
 
     @Test
-    fun piper_tar_extrae_paquete_sherpa_streaming() {
-        val root = File(System.getProperty("java.io.tmpdir"), "pipertar-test-${System.nanoTime()}")
+    fun piper_tar_extrae_paquete_sherpa_streaming() {        val root = File(System.getProperty("java.io.tmpdir"), "pipertar-test-${System.nanoTime()}")
         val pkg = File(root, "vits-piper-test-voice.tar.bz2")
         val out = File(root, "out")
         try {
@@ -511,6 +509,41 @@ class CoreTest {
             assertFalse("no debe escapar del destino", File(root, "pwned.txt").exists())
         } finally {
             root.deleteRecursively()
+        }
+    }
+
+    // ---------------- Variante FULL (BundledAssets) ----------------
+
+    @Test
+    fun bundled_dest_relative_mapea_files_y_piper() {
+        // Modelos sueltos -> raíz de filesDir.
+        assertEquals("Qwen3.5-0.8B-Q4_K_M.gguf", BundledAssets.destRelative("files/Qwen3.5-0.8B-Q4_K_M.gguf"))
+        assertEquals("ggml-base.bin", BundledAssets.destRelative("files/ggml-base.bin"))
+        // Voces -> piper_voices/<id>/…
+        assertEquals(
+            "piper_voices/es_AR-daniela-high/model.onnx",
+            BundledAssets.destRelative("piper/es_AR-daniela-high/model.onnx")
+        )
+        assertEquals(
+            "piper_voices/en_US-hfc_female-medium/espeak-ng-data/phondata",
+            BundledAssets.destRelative("piper/en_US-hfc_female-medium/espeak-ng-data/phondata")
+        )
+        // Entradas inválidas -> null.
+        assertNull(BundledAssets.destRelative("manifest.json"))
+        assertNull(BundledAssets.destRelative("piper/solo-id"))
+        assertNull(BundledAssets.destRelative("otra/ruta.bin"))
+    }
+
+    @Test
+    fun bundled_voices_son_las_por_defecto_del_catalogo() {
+        // La APK FULL empaqueta la voz por defecto de ES y de EN del catálogo.
+        assertEquals("es_AR-daniela-high", PiperVoiceManager.CATALOG.first { it.lang == "es" }.id)
+        assertEquals("en_US-hfc_female-medium", PiperVoiceManager.CATALOG.first { it.lang == "en" }.id)
+        assertEquals(listOf("es_AR-daniela-high", "en_US-hfc_female-medium"), BundledAssets.VOICES)
+        for (id in BundledAssets.VOICES) {
+            val spec = PiperVoiceManager.specFor(id)
+            assertTrue("la voz bundleada $id debe estar en el catálogo", spec != null)
+            assertTrue("la voz bundleada $id debe tener paquete sherpa", spec!!.tarUrl.endsWith(".tar.bz2"))
         }
     }
 }

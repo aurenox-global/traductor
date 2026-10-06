@@ -3,6 +3,21 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+// ---------------------------------------------------------------------------
+// Variante FULL (todo empaquetado) vs. build normal LITE.
+//
+//   ./gradlew :app:assembleDebug                 -> LITE (descarga en 1er arranque)
+//   ./gradlew :app:assembleDebug -Pbundled=true  -> FULL (modelos dentro de assets)
+//
+// La propiedad `bundled` NO usa flavors: el build normal queda igual (mismos
+// srcDirs, sin assets extra). Solo cuando está activa se añade `bundled-assets/`
+// como srcDir de assets y se define el flag BUNDLED_MODELS en BuildConfig.
+//
+// Los assets de la variante FULL se generan con `scripts/fetch_bundled_assets.sh`
+// (no se versionan, ver .gitignore).
+// ---------------------------------------------------------------------------
+val bundled: Boolean = (project.findProperty("bundled") as String?)?.toBoolean() ?: false
+
 android {
     namespace = "com.zota.traductor"
     compileSdk = 35
@@ -19,6 +34,9 @@ android {
             // arm64-v8a principal (OnePlus PLB110).
             abiFilters += listOf("arm64-v8a")
         }
+
+        // true en la APK FULL (modelos en assets); false en el build normal LITE.
+        buildConfigField("boolean", "BUNDLED_MODELS", bundled.toString())
 
         externalNativeBuild {
             cmake {
@@ -60,12 +78,36 @@ android {
 
     buildFeatures {
         viewBinding = true
+        // Necesario para exponer BUNDLED_MODELS. En LITE el valor es `false`.
+        buildConfig = true
+    }
+
+    // Modelos ya comprimidos: no volver a comprimirlos (build y copia más rápidos;
+    // además permite progreso/`openFd` correctos). Solo hay tales assets en FULL.
+    androidResources {
+        noCompress.addAll(listOf("gguf", "bin", "onnx", "txt", "json"))
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+if (bundled) {
+    // Los modelos bundleados se añaden SOLO a la variante FULL.
+    android.sourceSets.getByName("main").assets.srcDir("bundled-assets")
+
+    // Copia el APK FULL a un nombre distinto para no pisar el LITE.
+    // (assembleDebug lo registra AGP en su propio afterEvaluate: hay que esperar.)
+    val copyFullApk = tasks.register<Copy>("copyFullApk") {
+        from(layout.buildDirectory.file("outputs/apk/debug/app-debug.apk"))
+        into(layout.buildDirectory.dir("outputs/apk/full"))
+        rename { "traductor-full-arm64-debug.apk" }
+    }
+    afterEvaluate {
+        tasks.named("assembleDebug") { finalizedBy(copyFullApk) }
     }
 }
 

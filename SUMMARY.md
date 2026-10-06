@@ -12,6 +12,87 @@ Fecha: 2026-10-06 · Directorio: `/Users/zota/.openclaw/workspace/traductor/`
 
 ---
 
+# PARTE v0.10 — Variante FULL: modelos y voces empaquetados en la APK
+
+**Estado: ambos builds VERDES.** Se añade una variante **FULL** sin tocar el build
+normal (LITE) mediante una **propiedad Gradle** (`-Pbundled=true`), **sin product
+flavors**. La APK FULL lleva dentro (assets) todos los modelos que antes se
+descargaban en el primer arranque, y en runtime los **copia de assets a `filesDir`**
+(con progreso) en vez de descargarlos.
+
+Fecha: 2026-10-06 · Directorio (nuevo): `/Users/zota/Desktop/CODE/traductor/`
+**No se ha publicado nada** (ni push, ni releases).
+
+## 1. Resultado de los builds (verificado)
+
+| Dato | LITE (normal) | FULL (bundleada) |
+|---|---|---|
+| Comando | `./gradlew :app:assembleDebug :app:testDebugUnitTest` | `./gradlew :app:assembleDebug :app:testDebugUnitTest -Pbundled=true` |
+| Resultado | BUILD SUCCESSFUL | BUILD SUCCESSFUL |
+| Ruta EXACTA del APK | `app/build/outputs/apk/debug/app-debug.apk` | `app/build/outputs/apk/full/traductor-full-arm64-debug.apk` |
+| Tamaño | **66 319 222 B** (≈63,2 MiB) | **946 780 860 B** (≈902,9 MiB) |
+| sha256 | `562586f6e7961dce9bf4c4e6cf6ac8b89413fe3c6c299d20e064401ecac11898` | `d95cf1fd1cc667878b97d3639bc1eabd7d74bd99d99ebb67831c2477faa83549` |
+| Tests host | `CoreTest: 35 · OcrTest: 20` = **55, failures=0** | **55, failures=0** |
+
+El APK FULL se copia además a un nombre distinto (tarea `copyFullApk`, encadenada
+con `finalizedBy`) para no pisar el artefacto normal.
+
+## 2. Contenido del APK FULL (`unzip -l`)
+
+| Entrada (assets) | Bytes |
+|---|---|
+| `bundled/files/Qwen3.5-0.8B-Q4_K_M.gguf` | 527 502 816 |
+| `bundled/files/ggml-base.bin` | 147 951 465 |
+| `bundled/files/silero_vad.onnx` | 2 327 524 |
+| `bundled/files/ppocr_v6_det.onnx` | 1 780 590 |
+| `bundled/files/ppocr_v6_rec.onnx` | 4 462 639 |
+| `bundled/files/ppocr_v6_rec.yml` | 55 571 |
+| `bundled/piper/es_AR-daniela-high/model.onnx` | 113 851 893 |
+| `bundled/piper/en_US-hfc_female-medium/model.onnx` | 63 149 198 |
+| `bundled/manifest.json` | 63 004 |
+
+- Cada voz incluye `tokens.txt`, `voice.onnx.json` y `espeak-ng-data/` (**355
+  ficheros por voz**). Total de entradas del APK: **1 787**.
+- Los modelos ya comprimidos van **Stored** (0 % deflate), gracias a
+  `androidResources { noCompress += gguf,bin,onnx,txt,json }`.
+- El build FULL tarda **~36 s** (tras cachear lo nativo) y pide ~26 GB libres en disco.
+
+## 3. Qué se implementó
+
+- **`app/build.gradle.kts`**: `val bundled = findProperty("bundled")?.toBoolean() ?: false`;
+  `buildConfigField("boolean", "BUNDLED_MODELS", ...)`; `buildFeatures.buildConfig = true`;
+  `noCompress`; y, **solo si `bundled`**, `sourceSets.main.assets.srcDir("bundled-assets")`
+  + tarea `copyFullApk`. El build LITE no añade srcDirs ni bundlea nada.
+- **`BundledAssets.kt`** (nuevo): guiado por `bundled/manifest.json` (722 entradas con
+  tamaño), copia los assets que falten a `filesDir` (modelos a la raíz; voces a
+  `piper_voices/<id>/`) con progreso, escribe los `info.txt`/`sid` de cada voz y aplica
+  los modelos por defecto (Whisper base + Qwen + voz ES) sin pisar selecciones del usuario.
+  `destRelative()` es puro (testeable en host).
+- **`MainActivity.ensureModels()`**: en FULL copia primero los bundleados; después sigue la
+  lógica de descarga normal para lo que falte (no hay cambios en LITE).
+- **`OcrModels.ensureReady()`** y **`PiperVoiceManager.download()`**: si el modelo/voz va
+  bundleado, se copia; si no, se descarga como siempre.
+- **`scripts/fetch_bundled_assets.sh`** + **`scripts/bundled_manifest.py`** (nuevos):
+  descargan los modelos y generan el manifest. `app/bundled-assets/` está en `.gitignore`.
+
+## 4. NO roto / comprobado
+
+- LITE: mismo comando, mismos tests verdes, **0 entradas `assets/bundled/`** en la APK.
+- FULL: los 6 modelos + 2 voces están *dentro* (verificado con `unzip -l`).
+- El resto del pipeline (VAD, Whisper, LLM, OCR, TTS, historial) no se toca.
+
+## 5. Pendiente / no verificado (honesto)
+
+- **Sin test en dispositivo**: `adb devices` no lista ningún terminal, así que la copia
+  assets→`filesDir` en runtime no se ha ejecutado en un móvil real (sí están cubiertas por
+  test las rutas y la pureza del mapeo). Recomendado: instalar la FULL en el OnePlus PLB110
+  y comprobar el primer arranque (progreso de copia + modelo/voces activos).
+- El APK LITE crece ~148 KB frente al build previo por la clase nueva `BundledAssets` y el
+  `BuildConfig`; el comportamiento es idéntico (no bundlea modelos).
+- Sin bloques: el build FULL (≈900 MB) completó sin problemas de tamaño/tiempo.
+
+---
+
 # PARTE v0.7 — Voces Piper: pl/ar/tr/ko/bg/hu/ro/ja (género verificado por F0)
 
 ## 1. Resultado del build (verificado)

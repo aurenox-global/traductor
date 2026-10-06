@@ -50,3 +50,7 @@ signing.properties
 .cache/
 .tmp/
 *.tmp
+
+# ---------------- Variante FULL (assets generados) ----------------
+# Modelos bundleados para -Pbundled=true; se generan con scripts/fetch_bundled_assets.sh
+app/bundled-assets/

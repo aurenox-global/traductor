@@ -111,6 +111,10 @@ object OcrModels {
         onStatus: (String) -> Unit = {},
         onProgress: (Long, Long) -> Unit = { _, _ -> }
     ): Boolean {
+        // Variante FULL: los modelos (si van en el APK) se copian en vez de descargar.
+        if (BundledAssets.enabled && BundledAssets.available(ctx)) {
+            runCatching { BundledAssets.ensureAll(ctx, onStatus, onProgress, onlyPrefix = "files/") }
+        }
         for (spec in DOWNLOADS) {
             if (isPresent(ctx, spec)) continue
             onStatus("Descargando ${spec.label} …")

@@ -397,6 +397,25 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
     // ---------------- modelos ----------------
 
     private suspend fun ensureModels() {
+        // Variante FULL: copia una sola vez los modelos incluidos en el APK.
+        if (BundledAssets.enabled && BundledAssets.available(this)) {
+            setStatus("Copiando modelos incluidos en la APK…")
+            b.progressDownload.visibility = View.VISIBLE
+            withContext(Dispatchers.IO) {
+                try {
+                    BundledAssets.ensureAll(
+                        this@MainActivity,
+                        onStatus = { s -> runOnUiThread { setStatus(s) } },
+                        onProgress = { done, total -> runOnUiThread { setDownloadProgress(done, total) } }
+                    )
+                    BundledAssets.applyDefaults(this@MainActivity)
+                } catch (t: Throwable) {
+                    runOnUiThread { setStatus("Fallo copiando modelos incluidos: ${t.message}") }
+                }
+            }
+            b.progressDownload.visibility = View.GONE
+        }
+
         val pending = ModelManager.FIRST_RUN.filter { !ModelManager.isPresent(this, it) } +
             listOfNotNull(ModelManager.VAD.takeIf { !ModelManager.isPresent(this, it) })
         if (pending.isEmpty()) { setStatus(getString(R.string.status_models_ready)); return }

@@ -429,6 +429,11 @@ object PiperVoiceManager {
     ): File {
         val dir = voiceDir(ctx, spec.id)
         if (isReady(dir)) return dir
+        // Variante FULL: si la voz va incluida en el APK, se copia en vez de descargar.
+        if (BundledAssets.isBundledVoice(spec.id)) {
+            onStage("Copiando voz incluida en la APK…")
+            if (BundledAssets.copyVoice(ctx, spec.id, onProgress)) return dir
+        }
         resetCancel()
         ensureSpace(ctx, spec.approxBytes)
         if (spec.tarUrl.isBlank()) {
