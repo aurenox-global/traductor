@@ -41,6 +41,8 @@ object Languages {
         Lang("pl", "Polaco", "\uD83C\uDDF5\uD83C\uDDF1"),
         Lang("uk", "Ucraniano", "\uD83C\uDDFA\uD83C\uDDE6"),
         Lang("ro", "Rumano", "\uD83C\uDDF7\uD83C\uDDF4"),
+        Lang("bg", "Búlgaro", "\uD83C\uDDE7\uD83C\uDDEC"),
+        Lang("hu", "Húngaro", "\uD83C\uDDED\uD83C\uDDFA"),
         Lang("sv", "Sueco", "\uD83C\uDDF8\uD83C\uDDEA"),
         Lang("da", "Danés", "\uD83C\uDDE9\uD83C\uDDF0"),
         Lang("fi", "Finés", "\uD83C\uDDEB\uD83C\uDDEE"),

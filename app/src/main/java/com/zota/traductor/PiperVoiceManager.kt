@@ -86,7 +86,8 @@ object PiperVoiceManager {
         path: String,
         file: String,
         approxBytes: Long,
-        speakerId: Int = 0
+        speakerId: Int = 0,
+        gender: String = "F"
     ): Spec {
         check(file == id) { "id ($id) != file ($file)" }
         return Spec(
@@ -98,7 +99,37 @@ object PiperVoiceManager {
             jsonUrl = "$HF/$path/$file.onnx.json",
             approxBytes = approxBytes,
             speakerId = speakerId,
-            gender = "F"
+            gender = gender
+        )
+    }
+
+    /**
+     * Voz SIN paquete oficial de sherpa-onnx (esa URL da HTTP 404): se descargan los
+     * ficheros CRUDOS de rhasspy (`<file>.onnx` + `.onnx.json`) y se convierten
+     * on-device (`convert()`). `tarUrl` queda vacío para no intentar un paquete que no
+     * existe; `download()` salta directo al camino crudo.
+     */
+    private fun rawSpec(
+        id: String,
+        label: String,
+        lang: String,
+        path: String,
+        file: String,
+        approxBytes: Long,
+        speakerId: Int = 0,
+        gender: String = "F"
+    ): Spec {
+        check(file == id) { "id ($id) != file ($file)" }
+        return Spec(
+            id = id,
+            label = label,
+            lang = lang,
+            tarUrl = "",
+            onnxUrl = "$HF/$path/$file.onnx",
+            jsonUrl = "$HF/$path/$file.onnx.json",
+            approxBytes = approxBytes,
+            speakerId = speakerId,
+            gender = gender
         )
     }
 
@@ -118,8 +149,19 @@ object PiperVoiceManager {
      *   it_IT-paola-medium      193 Hz
      *   zh_CN-huayan-medium     202 Hz
      *
+     * Añadidas en v0.7 (medidas con el mismo método):
+     *   pl_PL-gosia-medium              206 Hz  femenina
+     *   ko_KR-kss-medium                306 Hz  femenina
+     *   hu_HU-anna-medium               184 Hz  femenina
+     *   ja_JP-hi_fi_captain-medium      269 Hz  femenina (sid 0; el sid 1 = 159 Hz, masculino)
+     *   ar_JO-kareem-medium             106 Hz  masculina (única voz disponible)
+     *   tr_TR-dfki-medium               109 Hz  masculina (única voz disponible)
+     *   bg_BG-dimitar-medium            113 Hz  masculina (única voz disponible)
+     *   ro_RO-mihai-medium              130 Hz  masculina (única voz disponible)
+     *
      * La primera voz de cada idioma es la preferida por defecto.
-     * `approxBytes` = tamaño real del `.tar.bz2` en sherpa-onnx.
+     * `approxBytes` = tamaño real del `.tar.bz2` en sherpa-onnx (o del `.onnx` crudo
+     * cuando el idioma no tiene paquete oficial).
      */
     val CATALOG: List<Spec> = listOf(
         // ---- Español (femeninas) ----
@@ -137,7 +179,23 @@ object PiperVoiceManager {
         // ---- Italiano (femenina) ----
         spec("it_IT-paola-medium", "Italiano · paola · femenina (medium)", "it", "it/it_IT/paola/medium", "it_IT-paola-medium", 67_221_173L),
         // ---- Chino (femenina) ----
-        spec("zh_CN-huayan-medium", "Chino · huayan · femenina (medium)", "zh", "zh/zh_CN/huayan/medium", "zh_CN-huayan-medium", 67_255_926L)
+        spec("zh_CN-huayan-medium", "Chino · huayan · femenina (medium)", "zh", "zh/zh_CN/huayan/medium", "zh_CN-huayan-medium", 67_255_926L),
+        // ---- Polaco (femenina) ----
+        spec("pl_PL-gosia-medium", "Polaco · gosia · femenina (medium) ♀", "pl", "pl/pl_PL/gosia/medium", "pl_PL-gosia-medium", 67_211_182L),
+        // ---- Árabe (solo hay voz masculina) ----
+        spec("ar_JO-kareem-medium", "Árabe (JO) · kareem · masculina (medium) ♂", "ar", "ar/ar_JO/kareem/medium", "ar_JO-kareem-medium", 67_177_830L, gender = "M"),
+        // ---- Turco (solo hay voz masculina) ----
+        spec("tr_TR-dfki-medium", "Turco · dfki · masculina (medium) ♂", "tr", "tr/tr_TR/dfki/medium", "tr_TR-dfki-medium", 67_201_221L, gender = "M"),
+        // ---- Coreano (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("ko_KR-kss-medium", "Coreano · kss · femenina (medium) ♀", "ko", "ko/ko_KR/kss/medium", "ko_KR-kss-medium", 63_222_238L),
+        // ---- Búlgaro (solo hay voz masculina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("bg_BG-dimitar-medium", "Búlgaro · dimitar · masculina (medium) ♂", "bg", "bg/bg_BG/dimitar/medium", "bg_BG-dimitar-medium", 63_222_114L, gender = "M"),
+        // ---- Húngaro (femenina) ----
+        spec("hu_HU-anna-medium", "Húngaro · anna · femenina (medium) ♀", "hu", "hu/hu_HU/anna/medium", "hu_HU-anna-medium", 67_167_701L),
+        // ---- Rumano (solo hay voz masculina) ----
+        spec("ro_RO-mihai-medium", "Rumano · mihai · masculina (medium) ♂", "ro", "ro/ro_RO/mihai/medium", "ro_RO-mihai-medium", 67_182_137L, gender = "M"),
+        // ---- Japonés (femenina = speaker 0; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("ja_JP-hi_fi_captain-medium", "Japonés · hi_fi_captain · femenina (medium, speaker F) ♀", "ja", "ja/ja_JP/hi_fi_captain/medium", "ja_JP-hi_fi_captain-medium", 76_753_970L, speakerId = 0)
     )
 
     fun specFor(id: String): Spec? = CATALOG.firstOrNull { it.id == id }
@@ -234,7 +292,8 @@ object PiperVoiceManager {
                     val arr = idMap.getJSONArray(k)
                     if (arr.length() > 0) entries.add(k to arr.getInt(0))
                 }
-                tokens.writeText(OnnxMeta.tokensFromPhonemeIdMap(entries))
+                // sherpa-onnx no acepta tokens multi-codepoint (ko/ja usan p.ej. "aɪ").
+                tokens.writeText(OnnxMeta.tokensFromPhonemeIdMap(entries, dropMultiCodepoint = true))
                 Log.i(TAG, "tokens.txt generado (${entries.size} símbolos)")
             }.onFailure { Log.e(TAG, "no se pudo generar tokens.txt: ${it.message}") }
         }
@@ -311,6 +370,19 @@ object PiperVoiceManager {
         if (isReady(dir)) return dir
         resetCancel()
         ensureSpace(ctx, spec.approxBytes)
+        if (spec.tarUrl.isBlank()) {
+            // Idiomas sin paquete oficial de sherpa: directo al .onnx crudo + convert().
+            onStage("Descargando voz (rhasspy, conversión on-device)…")
+            return try {
+                downloadRaw(ctx, spec, dir, onProgress)
+            } catch (c: Cancelled) {
+                deleteDir(dir)
+                throw c
+            } catch (t: Throwable) {
+                deleteDir(dir)
+                throw RuntimeException("no se pudo instalar ${spec.id}: ${t.message}", t)
+            }
+        }
         return try {
             onStage("Descargando paquete Piper…")
             downloadTar(ctx, spec, dir, onProgress, onStage)

@@ -1,3 +1,107 @@
+# Traductor — v0.7 (Android nativo, 100% offline)
+
+**Estado: build VERDE.** Se evoluciona el proyecto v0.6 (no se reescribe). La novedad de
+v0.7 es el **catálogo de voces Piper**: se añaden 8 idiomas nuevos (polaco, árabe, turco,
+coreano, búlgaro, húngaro, rumano y japonés), con preferencia por voces **femeninas**
+(verificadas midiendo F0) y, cuando un idioma solo tiene voz masculina, se incluye marcada
+como tal. Todo lo anterior (VAD, Whisper, LLM, OCR, descargas, alineación 16 KB, targetSdk 35,
+solo arm64-v8a, fallbacks) queda intacto.
+
+Fecha: 2026-10-06 · Directorio: `/Users/zota/.openclaw/workspace/traductor/`
+**No se ha publicado nada** (ni push, ni GitHub).
+
+---
+
+# PARTE v0.7 — Voces Piper: pl/ar/tr/ko/bg/hu/ro/ja (género verificado por F0)
+
+## 1. Resultado del build (verificado)
+
+| Dato | Valor |
+|---|---|
+| Comando | `./gradlew :app:assembleDebug :app:testDebugUnitTest` |
+| Resultado | `BUILD SUCCESSFUL` |
+| Ruta EXACTA del APK | `/Users/zota/.openclaw/workspace/traductor/app/build/outputs/apk/debug/app-debug.apk` |
+| Tamaño | **66 013 378 bytes** (≈62,96 MiB) |
+| sha256 | `c89bdea650e172887874f4c5ba4d5d2446ce216bf9cf60bd212fd61e9ff96ff1` |
+| Tests host | `CoreTest: tests=30 failures=0` · `OcrTest: tests=20 failures=0` (**50 en total**) |
+| Versión | `versionCode = 7` · `versionName = "0.7.0"` |
+
+## 2. Tabla idioma → voz → F0 → género (sherpa-onnx 1.13.8, `/tmp/piperprobe/venv`)
+
+| Idioma | Voz (id) | Fuente | F0 | Género |
+|---|---|---|---|---|
+| Polaco (pl) | `pl_PL-gosia-medium` | tar sherpa | 206,1 Hz | ♀ femenina |
+| Árabe (ar) | `ar_JO-kareem-medium` | tar sherpa | 105,5 Hz | ♂ masculina (única) |
+| Turco (tr) | `tr_TR-dfki-medium` | tar sherpa | 109,2 Hz | ♂ masculina (única) |
+| Coreano (ko) | `ko_KR-kss-medium` | crudo rhasspy | 306,2 Hz | ♀ femenina |
+| Búlgaro (bg) | `bg_BG-dimitar-medium` | crudo rhasspy | 113,1 Hz | ♂ masculina (única) |
+| Húngaro (hu) | `hu_HU-anna-medium` | tar sherpa | 183,8 Hz | ♀ femenina |
+| Rumano (ro) | `ro_RO-mihai-medium` | tar sherpa | 129,7 Hz | ♂ masculina (única) |
+| Japonés (ja) | `ja_JP-hi_fi_captain-medium` (sid 0) | crudo rhasspy | 268,9 Hz | ♀ femenina |
+
+Método: `median_f0` (autocorrelación por tramas de 40 ms; femenino ≥ 165 Hz) sobre audio
+sintetizado con el `espeak-ng-data` compartido. Candidatas descartadas: polaco bass 81,1 M /
+darkman 112,5 M / mc_speech 111,9 M; húngaro imre 108,4 M; japonés sid 1 = 158,6 M.
+
+## 3. Qué se implementó
+
+### A) Catálogo — `PiperVoiceManager.kt`
+- `spec()` gana el parámetro `gender` (por defecto `"F"`); nuevo `rawSpec()` para voces
+  SIN paquete oficial de sherpa (`tarUrl = ""` → descarga directa `.onnx` + `.onnx.json`).
+- 8 entradas nuevas en `CATALOG` con etiqueta `idioma · nombre · (calidad) ♀/♂`.
+- `download()`: si `tarUrl` está vacío salta directo a `downloadRaw()` (evita el 404). Las
+  voces con paquete siguen igual (tar principal + respaldo crudo).
+
+### B) Tokens multi-codepoint (ko/ja) — `OnnxMeta.kt`
+- sherpa-onnx exige que cada token de `tokens.txt` sea **un único codepoint Unicode**; los
+  mapas de coreano y japonés incluyen bigramas IPA (`aɪ`, `aʊ`, `ɔɪ`, `eɪ`, `oʊ`) que hacían
+  **abortar** el lector (`Error when reading tokens at Line aɪ 161`).
+- `tokensFromPhonemeIdMap(entries, dropMultiCodepoint = true)` los omite; la fonemización de
+  ko/ja no los emite, así que la síntesis queda correcta (host: ko 306,2 Hz · ja 268,9 Hz).
+  El comportamiento por defecto no filtra (compatibilidad previa intacta).
+
+### C) Idiomas — `Languages.kt`
+- Añadidos **bg (Búlgaro 🇧🇬)** y **hu (Húngaro 🇭🇺)** (pl, ar, tr, ko, ro, ja ya estaban).
+
+### D) Documentación
+- README.md (EN+ES): 30+ idiomas, tabla de voces nuevas, nota de preferencia femenina.
+- docs/index.html: idiomas, TTS y versión v0.7.0.
+- strings.xml: descripción de Piper matizada (femeninas; masculinas solo si son únicas).
+
+## 4. Archivos nuevos / modificados
+
+```
+app/build.gradle.kts                          versionCode 7 / versionName 0.7.0
+app/src/main/java/.../PiperVoiceManager.kt    spec() con género, rawSpec(), +8 voces, download() crudo directo
+app/src/main/java/.../OnnxMeta.kt             tokensFromPhonemeIdMap(..., dropMultiCodepoint)
+app/src/main/java/.../Languages.kt            +bg, +hu
+app/src/main/res/values/strings.xml           descripción Piper matizada
+app/src/test/.../CoreTest.kt                  +3 tests, 2 ajustados
+README.md · docs/index.html · SUMMARY.md      documentación
+```
+
+## 5. NO roto (reverificado)
+
+- Build verde: 50 tests host (CoreTest 30 + OcrTest 20), 0 fallos.
+- Catálogo es/en/fr/de/it/zh intacto (todas siguen marcadas `"F"`).
+- VAD, Whisper, LLM, OCR, pipeline, descargas y alineación 16 KB sin tocar.
+
+## 6. Pendiente / no verificado (honesto)
+
+- **Sin dispositivo**: descarga y conversión cruda no probadas en el móvil (sí en host con
+  el mismo algoritmo). El APK compila y los tests pasan.
+- **Japonés**: la voz usa `phoneme_type = japanese`; sherpa avisa de codepoints combinatorios
+  omitidos (U+031e, U+0308). Sintetiza y mide F0, pero la calidad fonética no se ha validado.
+- **Calidad subjetiva** de las voces masculinas (ar/tr/bg/ro) no evaluada en el móvil.
+
+## 7. Siguiente paso concreto
+
+1. Instalar el APK en el OnePlus PLB110 y descargar/activar las voces nuevas.
+2. Verificar en dispositivo la conversión cruda de ko/bg/ja (Ajustes → descargar → Probar voz).
+3. Escuchar ko/ja por si el filtrado de bigramas afecta a la prosodia.
+
+---
+
 # Traductor — v0.6 (Android nativo, 100% offline)
 
 **Estado: build VERDE.** Se evoluciona el proyecto v0.5 (no se reescribe). La novedad de

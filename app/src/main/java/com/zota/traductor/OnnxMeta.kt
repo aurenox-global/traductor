@@ -94,9 +94,17 @@ object OnnxMeta {
     }
 
     /** tokens.txt estilo sherpa: una línea `<symbol> <id>` por entrada. */
-    fun tokensFromPhonemeIdMap(entries: List<Pair<String, Int>>): String {
+    fun tokensFromPhonemeIdMap(
+        entries: List<Pair<String, Int>>,
+        dropMultiCodepoint: Boolean = false
+    ): String {
         val sb = StringBuilder()
-        for ((symbol, id) in entries) sb.append(symbol).append(' ').append(id).append('\n')
+        for ((symbol, id) in entries) {
+            // sherpa-onnx exige tokens de UN único codepoint Unicode; símbolos IPA
+            // multi-codepoint (p.ej. "aɪ") harían fallar su lector de tokens.
+            if (dropMultiCodepoint && symbol.codePointCount(0, symbol.length) > 1) continue
+            sb.append(symbol).append(' ').append(id).append('\n')
+        }
         return sb.toString()
     }
 

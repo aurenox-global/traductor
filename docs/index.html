@@ -156,6 +156,18 @@
   span[data-lang] { display: none; }
   html[data-lang="es"] span[data-lang="es"], html[data-lang="en"] span[data-lang="en"] { display: inline; }
   @media (max-width: 560px) { .top .brand { display: none; } }
+
+  /* ---------- CTA (descarga / github) ---------- */
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 15px;
+    border: 1px solid var(--border); color: var(--text); background: var(--card);
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: var(--shadow); }
+  .btn.primary:hover { background: var(--blue-deep); }
 </style>
 </head>
 <body>
@@ -185,6 +197,14 @@
     <span class="badge">100% offline</span>
     <span class="badge">Kotlin + JNI / C++</span>
     <span class="badge">Open source</span>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/aurenox-global/traductor/releases/latest/download/traductor-arm64-debug.apk">
+      ⬇️&nbsp;<span data-lang="es">Descargar APK</span><span data-lang="en">Download APK</span>
+    </a>
+    <a class="btn" href="https://github.com/aurenox-global/traductor">
+      🐙&nbsp;<span data-lang="es">Ver en GitHub</span><span data-lang="en">View on GitHub</span>
+    </a>
   </div>
 </div>
 
@@ -218,8 +238,8 @@
   <h2><span data-lang="es">Características</span><span data-lang="en">Features</span></h2>
   <div class="grid">
     <div class="card"><div class="ico">🌍</div>
-      <h3><span data-lang="es">17+ idiomas</span><span data-lang="en">17+ languages</span></h3>
-      <p><span data-lang="es">Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano…</span><span data-lang="en">Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian…</span></p>
+      <h3><span data-lang="es">30+ idiomas</span><span data-lang="en">30+ languages</span></h3>
+      <p><span data-lang="es">Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano, rumano, búlgaro, húngaro…</span><span data-lang="en">Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian, Romanian, Bulgarian, Hungarian…</span></p>
     </div>
     <div class="card"><div class="ico">⌨️</div>
       <h3><span data-lang="es">Traducción de texto</span><span data-lang="en">Text translation</span></h3>
@@ -235,7 +255,7 @@
     </div>
     <div class="card"><div class="ico">🔊</div>
       <h3><span data-lang="es">Lectura offline</span><span data-lang="en">Offline read-aloud</span></h3>
-      <p><span data-lang="es">Voces neuronales Piper (femeninas, ES/EN/FR/DE…) o el motor del sistema como reserva.</span><span data-lang="en">Piper neural voices (female, ES/EN/FR/DE…) or the system engine as fallback.</span></p>
+      <p><span data-lang="es">Voces neuronales Piper para 14 idiomas (ES/EN/FR/DE/IT/ZH/PL/AR/TR/KO/BG/HU/RO/JA): femeninas por preferencia, masculinas solo si son la única voz del idioma. Motor del sistema como reserva.</span><span data-lang="en">Piper neural voices for 14 languages (ES/EN/FR/DE/IT/ZH/PL/AR/TR/KO/BG/HU/RO/JA): female by preference, male only when it's a language's only voice. System engine as fallback.</span></p>
     </div>
     <div class="card"><div class="ico">🕘</div>
       <h3><span data-lang="es">Historial</span><span data-lang="en">History</span></h3>
@@ -293,7 +313,7 @@ photo ─▶ OCR ───▶ └───────────────�
     <tr><td><span data-lang="es">Voz (ASR)</span><span data-lang="en">Speech (ASR)</span></td><td>Whisper ggml-tiny / base / small</td><td>74 – 465 MB</td></tr>
     <tr><td>VAD</td><td>Silero VAD (ONNX)</td><td>~2,2 MB</td></tr>
     <tr><td>OCR</td><td>PaddleOCR PP-OCRv6 tiny (det + rec)</td><td>~6 MB</td></tr>
-    <tr><td>TTS</td><td><span data-lang="es">Voz Piper (es/en/fr/de…)</span><span data-lang="en">Piper voice (es/en/fr/de…)</span></td><td>~25 – 110 MB</td></tr>
+    <tr><td>TTS</td><td><span data-lang="es">Voz Piper (es/en/fr/de/pl/ar/tr/ko/bg/hu/ro/ja…)</span><span data-lang="en">Piper voice (es/en/fr/de/pl/ar/tr/ko/bg/hu/ro/ja…)</span></td><td>~25 – 110 MB</td></tr>
   </table>
   <p>
     <span data-lang="es">Todos los modelos se pueden importar manualmente desde el almacenamiento si ya los tienes. En Ajustes puedes ver, activar y borrar cada modelo.</span>
@@ -356,7 +376,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
 </section>
 
 <footer class="wrap">
-  <p>Traductor <b>v0.6.0</b> · <span data-lang="es">Hecho con</span><span data-lang="en">Made with</span> <span class="heart">♥</span> <span data-lang="es">en Cuba 🇨🇺 · 100% offline</span><span data-lang="en">in Cuba 🇨🇺 · 100% offline</span></p>
+  <p>Traductor <b>v0.7.0</b> · <span data-lang="es">Hecho con</span><span data-lang="en">Made with</span> <span class="heart">♥</span> <span data-lang="es">en Cuba 🇨🇺 · 100% offline</span><span data-lang="en">in Cuba 🇨🇺 · 100% offline</span></p>
 </footer>
 
 <script>

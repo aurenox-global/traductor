@@ -49,7 +49,7 @@ class CoreTest {
     @Test
     fun languages_cubre_minimo_requerido() {
         val required = listOf("auto", "es", "en", "fr", "de", "it", "pt", "ru",
-            "zh", "ja", "ko", "ar", "hi", "tr", "nl", "pl", "uk")
+            "zh", "ja", "ko", "ar", "hi", "tr", "nl", "pl", "uk", "bg", "hu", "ro")
         for (code in required) {
             assertTrue("falta idioma $code", Languages.ALL.any { it.code == code })
         }
@@ -174,6 +174,21 @@ class CoreTest {
     }
 
     @Test
+    fun onnx_tokens_omite_simbolos_multicodepoint() {
+        // sherpa-onnx exige un solo codepoint por token; "aɪ" debe poder omitirse.
+        val txt = OnnxMeta.tokensFromPhonemeIdMap(
+            listOf("a" to 14, "aɪ" to 161, " " to 3),
+            dropMultiCodepoint = true
+        )
+        val lines = txt.trim().split("\n")
+        assertEquals(2, lines.size)
+        assertTrue(lines.contains("a 14"))
+        assertFalse("no debe conservarse el bigrama", lines.any { it.contains("aɪ") })
+        // Sin filtro se conserva (comportamiento previo intacto).
+        assertTrue(OnnxMeta.tokensFromPhonemeIdMap(listOf("aɪ" to 161)).contains("aɪ"))
+    }
+
+    @Test
     fun piper_catalogo_tiene_voces_y_urls() {
         assertTrue(PiperVoiceManager.CATALOG.any { it.id == "es_AR-daniela-high" && it.lang == "es" })
         assertTrue(PiperVoiceManager.CATALOG.any { it.id == "en_US-hfc_female-medium" && it.lang == "en" })
@@ -185,10 +200,16 @@ class CoreTest {
     }
 
     @Test
-    fun piper_catalogo_es_solo_femenino() {
-        // Todas las voces del catálogo deben estar marcadas femeninas.
+    fun piper_catalogo_prefiere_femeninas_con_excepciones() {
+        // Preferencia del usuario: voces FEMENINAS. Solo se admite una voz masculina
+        // cuando es la ÚNICA disponible para ese idioma (y queda marcada como "M").
+        val maleOnly = setOf("ar", "tr", "bg", "ro")
         for (s in PiperVoiceManager.CATALOG) {
-            assertEquals("voz no femenina: ${s.id}", "F", s.gender)
+            if (s.lang in maleOnly) {
+                assertEquals("deberia ser masculina: ${s.id}", "M", s.gender)
+            } else {
+                assertEquals("deberia ser femenina: ${s.id}", "F", s.gender)
+            }
         }
         // La voz masculina conocida NO debe aparecer.
         assertFalse(PiperVoiceManager.CATALOG.any { it.id == "es_ES-davefx-medium" })
@@ -206,17 +227,73 @@ class CoreTest {
         }
     }
 
+    @Test
+    fun piper_catalogo_cubre_los_ocho_idiomas_nuevos() {
+        // v0.7: una voz por cada idioma nuevo. Género según la medición F0 real.
+        // pl/ko/hu/ja -> femenina; ar/tr/bg/ro -> masculina (única disponible).
+        val expected = mapOf(
+            "pl" to ("pl_PL-gosia-medium" to "F"),
+            "ar" to ("ar_JO-kareem-medium" to "M"),
+            "tr" to ("tr_TR-dfki-medium" to "M"),
+            "ko" to ("ko_KR-kss-medium" to "F"),
+            "bg" to ("bg_BG-dimitar-medium" to "M"),
+            "hu" to ("hu_HU-anna-medium" to "F"),
+            "ro" to ("ro_RO-mihai-medium" to "M"),
+            "ja" to ("ja_JP-hi_fi_captain-medium" to "F")
+        )
+        for ((lang, pair) in expected) {
+            val (id, gender) = pair
+            val spec = PiperVoiceManager.CATALOG.firstOrNull { it.id == id }
+            assertTrue("falta la voz $id", spec != null)
+            assertEquals("idioma de $id", lang, spec!!.lang)
+            assertEquals("género de $id", gender, spec.gender)
+            assertTrue("label sin nombre: ${spec.label}", spec.label.contains("·"))
+        }
+        // El japonés es multi-speaker y la voz femenina es el speaker 0.
+        assertEquals(0, PiperVoiceManager.CATALOG.first { it.id == "ja_JP-hi_fi_captain-medium" }.speakerId)
+        // Unicidad de ids.
+        val ids = PiperVoiceManager.CATALOG.map { it.id }
+        assertEquals("ids duplicados", ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun piper_catalogo_voces_crudas_sin_paquete() {
+        // ko/bg/ja no tienen paquete sherpa (HTTP 404): tarUrl vacío + URL cruda correcta.
+        val raw = listOf(
+            "ko_KR-kss-medium" to "ko/ko_KR/kss/medium",
+            "bg_BG-dimitar-medium" to "bg/bg_BG/dimitar/medium",
+            "ja_JP-hi_fi_captain-medium" to "ja/ja_JP/hi_fi_captain/medium"
+        )
+        for ((id, path) in raw) {
+            val s = PiperVoiceManager.CATALOG.first { it.id == id }
+            assertEquals("tarUrl debe estar vacío en $id", "", s.tarUrl)
+            assertEquals(
+                "onnxUrl incorrecta en $id",
+                "https://huggingface.co/rhasspy/piper-voices/resolve/main/$path/$id.onnx",
+                s.onnxUrl
+            )
+            assertEquals(
+                "jsonUrl incorrecta en $id",
+                "https://huggingface.co/rhasspy/piper-voices/resolve/main/$path/$id.onnx.json",
+                s.jsonUrl
+            )
+            assertTrue("approxBytes irreal en $id", s.approxBytes > 10_000_000L)
+        }
+    }
+
     // ---------------- Piper: paquetes sherpa (.tar.bz2) ----------------
 
     @Test
     fun piper_catalogo_usa_paquetes_sherpa() {
         for (s in PiperVoiceManager.CATALOG) {
-            assertEquals(
-                "URL tar incorrecta para ${s.id}",
-                "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-${s.id}.tar.bz2",
-                s.tarUrl
-            )
-            assertTrue(s.tarUrl.endsWith(".tar.bz2"))
+            if (s.tarUrl.isNotBlank()) {
+                assertEquals(
+                    "URL tar incorrecta para ${s.id}",
+                    "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-${s.id}.tar.bz2",
+                    s.tarUrl
+                )
+                assertTrue(s.tarUrl.endsWith(".tar.bz2"))
+            }
             assertTrue("approxBytes irreal para ${s.id}", s.approxBytes > 10_000_000L)
         }
         // La primera del catálogo de español es daniela (por defecto).

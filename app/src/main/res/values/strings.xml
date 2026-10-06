@@ -61,7 +61,7 @@
 
     <!-- Ajustes: voz Piper (TTS neuronal offline) -->
     <string name="settings_piper_title">Voz neuronal (Piper · texto a voz offline)</string>
-    <string name="settings_piper_desc">Lee el texto con un motor neuronal Piper (voces femeninas), sin depender del TTS del sistema.</string>
+    <string name="settings_piper_desc">Lee el texto con un motor neuronal Piper (voces femeninas; masculinas solo cuando son la única voz del idioma), sin depender del TTS del sistema.</string>
     <string name="piper_enabled">Usar Piper cuando haya voz instalada (si no, motor del sistema)</string>
     <string name="import_piper">Importar voz Piper</string>
     <string name="piper_test">Probar voz</string>

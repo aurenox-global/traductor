@@ -40,11 +40,11 @@ once the models are downloaded, the app works in airplane mode.
 
 | | |
 |---|---|
-| 🌍 **17+ languages** | Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian… |
+| 🌍 **30+ languages** | Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian, Romanian, Bulgarian, Hungarian… |
 | ⌨️ **Text translation** | Type or paste, with an ES/EN translated interface and language selector. |
 | 🎤 **Voice translation** | Whisper ASR + VAD: press the mic, speak naturally, get text. |
 | 📷 **Photo translation (OCR)** | Camera or gallery → offline text extraction → editable input → translation. |
-| 🔊 **Offline TTS** | Piper female voices (ES, EN, FR, DE, …) or the system engine as fallback. |
+| 🔊 **Offline TTS** | Piper neural voices for 14 languages (ES, EN, FR, DE, IT, ZH, PL, AR, TR, KO, BG, HU, RO, JA): **female by preference**, male only when it is a language's only voice (AR, TR, BG, RO). System engine as fallback. |
 | 🕘 **History** | Your translations are stored locally and can be revisited. |
 | ⚙️ **Model manager** | Download or import GGUF/Whisper/Piper models from storage. |
 | 🔒 **Private by design** | Nothing leaves the phone. No ads, no analytics, no servers. |
@@ -78,6 +78,28 @@ once the models are downloaded, the app works in airplane mode.
   downloads/import; `Prompts` builds the Qwen chat prompt; `HistoryStore` persists.
 - **Models downloaded at runtime** (never bundled in the APK) to the app's private
   storage, sizes shown in Settings.
+
+### Offline voices (Piper)
+
+Neural voices are downloaded at runtime (never bundled). The catalog **prefers
+female voices** (verified by measuring the fundamental frequency, F0, of the
+synthesized audio: female ≈ 165–250 Hz). A **male** voice is only included when it
+is the *only* voice available for that language, and it is labelled as such (♂).
+
+| Language | Voice | F0 | Gender |
+|---|---|---|---|
+| Polish | `pl_PL-gosia-medium` | 206 Hz | ♀ female |
+| Korean | `ko_KR-kss-medium` | 306 Hz | ♀ female |
+| Hungarian | `hu_HU-anna-medium` | 184 Hz | ♀ female |
+| Japanese | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ female |
+| Arabic | `ar_JO-kareem-medium` | 106 Hz | ♂ male (only option) |
+| Turkish | `tr_TR-dfki-medium` | 109 Hz | ♂ male (only option) |
+| Bulgarian | `bg_BG-dimitar-medium` | 113 Hz | ♂ male (only option) |
+| Romanian | `ro_RO-mihai-medium` | 130 Hz | ♂ male (only option) |
+
+Korean, Bulgarian and Japanese have no official sherpa-onnx package, so the raw
+rhasspy files (`.onnx` + `.onnx.json`) are downloaded and converted **on the device**
+(tokens.txt from `phoneme_id_map` + Piper metadata embedded in the `.onnx`).
 
 ### Requirements
 
@@ -193,11 +215,11 @@ descargados los modelos, funciona incluso en modo avión.
 
 | | |
 |---|---|
-| 🌍 **17+ idiomas** | Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano… |
+| 🌍 **30+ idiomas** | Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano, rumano, búlgaro, húngaro… |
 | ⌨️ **Traducción de texto** | Escribe o pega, con interfaz traducida ES/EN y selector de idiomas. |
 | 🎤 **Traducción de voz** | ASR Whisper + VAD: pulsa el micro, habla con naturalidad y obtén el texto. |
 | 📷 **Traducción de fotos (OCR)** | Cámara o galería → extracción de texto offline → entrada editable → traducción. |
-| 🔊 **TTS offline** | Voces femeninas Piper (ES, EN, FR, DE, …) o el motor del sistema como reserva. |
+| 🔊 **TTS offline** | Voces neuronales Piper para 14 idiomas (ES, EN, FR, DE, IT, ZH, PL, AR, TR, KO, BG, HU, RO, JA): **femeninas por preferencia**, masculinas solo cuando son la única voz del idioma (AR, TR, BG, RO). Motor del sistema como reserva. |
 | 🕘 **Historial** | Tus traducciones se guardan en local y puedes consultarlas. |
 | ⚙️ **Gestor de modelos** | Descarga o importa modelos GGUF/Whisper/Piper desde el almacenamiento. |
 | 🔒 **Privacidad por diseño** | Nada sale del teléfono. Sin anuncios, sin analíticas, sin servidores. |
@@ -232,6 +254,28 @@ descargados los modelos, funciona incluso en modo avión.
   descargas/importaciones; `Prompts` construye el chat de Qwen; `HistoryStore` persiste.
 - **Modelos descargados en tiempo de ejecución** (nunca incluidos en el APK) al
   almacenamiento privado de la app, con tamaños visibles en Ajustes.
+
+### Voces offline (Piper)
+
+Las voces neuronales se descargan en tiempo de ejecución (nunca van en el APK). El
+catálogo **prefiere voces femeninas** (verificado midiendo la frecuencia fundamental,
+F0, del audio sintetizado: femenina ≈ 165–250 Hz). Solo se incluye una voz
+**masculina** cuando es la *única* disponible para ese idioma, y va marcada como tal (♂).
+
+| Idioma | Voz | F0 | Género |
+|---|---|---|---|
+| Polaco | `pl_PL-gosia-medium` | 206 Hz | ♀ femenina |
+| Coreano | `ko_KR-kss-medium` | 306 Hz | ♀ femenina |
+| Húngaro | `hu_HU-anna-medium` | 184 Hz | ♀ femenina |
+| Japonés | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ femenina |
+| Árabe | `ar_JO-kareem-medium` | 106 Hz | ♂ masculina (única) |
+| Turco | `tr_TR-dfki-medium` | 109 Hz | ♂ masculina (única) |
+| Búlgaro | `bg_BG-dimitar-medium` | 113 Hz | ♂ masculina (única) |
+| Rumano | `ro_RO-mihai-medium` | 130 Hz | ♂ masculina (única) |
+
+Coreano, búlgaro y japonés no tienen paquete oficial de sherpa-onnx, así que se
+descarcan los ficheros crudos de rhasspy (`.onnx` + `.onnx.json`) y se convierten
+**en el dispositivo** (tokens.txt desde `phoneme_id_map` + metadata Piper dentro del `.onnx`).
 
 ### Requisitos
 
@@ -327,6 +371,6 @@ terceros conservan sus propias licencias (ver arriba).
 
 <div align="center">
 
-**Traductor v0.6.0** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
+**Traductor v0.7.0** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
 
 </div>
