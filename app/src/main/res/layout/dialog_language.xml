@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp">
+
+    <EditText
+        android:id="@+id/editLanguageSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/lang_search_hint"
+        android:inputType="text"
+        android:imeOptions="actionSearch|flagNoExtractUi"
+        android:maxLines="1"
+        android:textColor="@color/on_panel"
+        android:textColorHint="@color/muted" />
+
+    <ListView
+        android:id="@+id/listLanguages"
+        android:layout_width="match_parent"
+        android:layout_height="360dp"
+        android:divider="@null"
+        android:dividerHeight="0dp" />
+</LinearLayout>

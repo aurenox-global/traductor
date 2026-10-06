@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Traductor</string>
+
+    <!-- Barra superior / paneles -->
+    <string name="detect_language">Detectar idioma</string>
+    <string name="input_hint">Escribe el texto o usa el micrófono…</string>
+    <string name="output_hint">La traducción aparecerá aquí</string>
+    <string name="translate">Traducir</string>
+    <string name="clear_all">Limpiar todo</string>
+
+    <!-- Botones -->
+    <string name="cd_mic">Micrófono</string>
+    <string name="cd_speak">Escuchar</string>
+    <string name="cd_copy">Copiar</string>
+    <string name="cd_paste">Pegar</string>
+    <string name="cd_clear">Limpiar</string>
+    <string name="cd_swap">Intercambiar idiomas</string>
+    <string name="cd_settings">Ajustes</string>
+    <string name="cd_history">Historial</string>
+    <string name="cd_stop">Detener</string>
+    <string name="cd_camera">Foto para traducir (OCR)</string>
+
+    <!-- OCR de fotos -->
+    <string name="ocr_choose_title">Traducir una imagen</string>
+    <string name="ocr_take_photo">Hacer foto</string>
+    <string name="ocr_pick_gallery">Elegir de galería</string>
+    <string name="status_camera_denied">Permiso de cámara denegado</string>
+    <string name="status_camera_missing">No hay ninguna aplicación de cámara instalada</string>
+    <string name="status_ocr_loading">Analizando la imagen (OCR offline)…</string>
+    <string name="status_ocr_done">Texto reconocido. Puedes corregirlo antes de traducir.</string>
+    <string name="status_ocr_empty">No se reconoció texto en la imagen</string>
+    <string name="status_ocr_error">No se pudo leer la imagen</string>
+    <string name="status_ocr_models">Descargando el motor OCR (solo la primera vez)…</string>
+
+    <string name="start_listening">Iniciar escucha</string>
+    <string name="stop_listening">Detener</string>
+    <string name="auto_tts">Leer traducción</string>
+
+    <!-- Estados -->
+    <string name="status_idle">Listo</string>
+    <string name="status_translating">Traduciendo…</string>
+    <string name="status_loading">Cargando modelos…</string>
+    <string name="status_copied">Copiado al portapapeles</string>
+    <string name="status_pasted">Pegado</string>
+    <string name="status_clipboard_empty">El portapapeles está vacío</string>
+    <string name="status_mic_denied">Permiso de micrófono denegado</string>
+    <string name="status_listening">Escuchando… habla con normalidad</string>
+    <string name="status_downloading">Descarga inicial de modelos (Wi-Fi recomendado)…</string>
+    <string name="status_download_done">Descarga completada</string>
+    <string name="status_models_ready">Modelos listos. Pulsa Traducir o usa el micrófono.</string>
+    <string name="status_missing_models">Faltan modelos. Ve a Ajustes para descargarlos o importarlos.</string>
+    <string name="lang_picker_title">Selecciona un idioma</string>
+    <string name="lang_search_hint">Buscar idioma…</string>
+
+    <!-- Ajustes -->
+    <string name="settings">Ajustes</string>
+    <string name="settings_mt_title">Modelo de traducción (Qwen GGUF)</string>
+    <string name="settings_asr_title">Modelo de voz (Whisper)</string>
+    <string name="settings_vad_title">Detector de voz (VAD)</string>
+
+    <!-- Ajustes: voz Piper (TTS neuronal offline) -->
+    <string name="settings_piper_title">Voz neuronal (Piper · texto a voz offline)</string>
+    <string name="settings_piper_desc">Lee el texto con un motor neuronal Piper (voces femeninas), sin depender del TTS del sistema.</string>
+    <string name="piper_enabled">Usar Piper cuando haya voz instalada (si no, motor del sistema)</string>
+    <string name="import_piper">Importar voz Piper</string>
+    <string name="piper_test">Probar voz</string>
+    <string name="piper_no_voices">Todavía no hay voces Piper. Descarga una o impórtala.</string>
+    <string name="piper_test_hint">Escribe algo para escucharlo…</string>
+    <string name="cd_speak_test">Escuchar</string>
+    <string name="piper_converting">Preparando voz (tokens + metadata)…</string>
+    <string name="piper_download_hint">Las voces se descargan como paquete oficial de sherpa-onnx (“vits-piper-…tar.bz2”) con espeak-ng-data incluido.</string>
+    <string name="settings_import">Importar desde el almacenamiento</string>
+    <string name="settings_download">Descargar</string>
+    <string name="settings_active">Activo</string>
+    <string name="settings_use">Usar</string>
+    <string name="settings_delete">Eliminar</string>
+    <string name="settings_cancel">Cancelar</string>
+    <string name="settings_present">Descargado</string>
+    <string name="settings_missing">No descargado</string>
+    <string name="settings_imported">Importado</string>
+    <string name="settings_downloading">Descargando…</string>
+    <string name="import_gguf">Importar GGUF</string>
+    <string name="import_whisper">Importar modelo Whisper</string>
+    <string name="import_choose_mt">Elige un GGUF de Qwen</string>
+    <string name="import_choose_asr">Elige un modelo Whisper (.bin/.gguf)</string>
+
+    <!-- Historial -->
+    <string name="history">Historial</string>
+    <string name="history_empty">Todavía no hay traducciones guardadas</string>
+
+    <!-- Acerca de / créditos -->
+    <string name="settings_about_title">Acerca de</string>
+    <string name="settings_about_version">Versión %1$s</string>
+    <string name="settings_credit">Creado por %1$s · Cuba</string>
+    <string name="settings_credit_author">Andres Mag</string>
+    <string name="settings_footer_note">100% offline · la primera descarga requiere conexión</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema oscuro por defecto (estilo Google Translate, offline) -->
+    <color name="bg">#FF0F1115</color>
+    <color name="panel">#FF1B1F26</color>
+    <color name="panel_stroke">#FF2B313B</color>
+    <color name="accent">#FF8AB4F8</color>
+    <color name="accent_dark">#FF3B5C8F</color>
+    <color name="on_panel">#FFE6E8EB</color>
+    <color name="muted">#FF9AA0A6</color>
+    <color name="danger">#FFEF6B6B</color>
+    <color name="pill_bg">#FF232A33</color>
+    <color name="pill_bg_active">#FF2E4A73</color>
+
+    <color name="bubble_user">#FFD6E4FF</color>
+    <color name="bubble_translation">#FFD9F2E0</color>
+    <color name="bubble_meta">#FF666666</color>
+    <color name="ic_background">#FF0A84FF</color>
+</resources>

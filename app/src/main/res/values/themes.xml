@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Traductor" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">#FF0B1020</item>
+        <item name="colorPrimaryContainer">#FF28374A</item>
+        <item name="colorOnPrimaryContainer">@color/on_panel</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSurface">@color/panel</item>
+        <item name="colorOnSurface">@color/on_panel</item>
+        <item name="colorSurfaceVariant">@color/panel_stroke</item>
+        <item name="colorOnSurfaceVariant">@color/muted</item>
+        <item name="colorOutline">@color/panel_stroke</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:textColorPrimary">@color/on_panel</item>
+        <item name="android:textColorSecondary">@color/muted</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+    </style>
+</resources>

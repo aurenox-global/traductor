@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glifo del icono adaptativo: dos bocadillos de chat superpuestos (blanco).
+     Contenido dentro de la zona segura (66dp) para Android 8+. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- bocadillo trasero -->
+    <path
+        android:fillColor="#B3FFFFFF"
+        android:pathData="M42,30h14a8,8 0 0 1 8,8v10a8,8 0 0 1 -8,8h-6l-10,9v-9h-6a8,8 0 0 1 -8,-8v-10a8,8 0 0 1 8,-8z" />
+    <!-- bocadillo frontal, con contorno azul para separarlo del trasero -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:strokeColor="#FF0A84FF"
+        android:strokeWidth="2.4"
+        android:pathData="M52,48h24a8,8 0 0 1 8,8v12a8,8 0 0 1 -8,8h-4l6,8v-8h-26a8,8 0 0 1 -8,-8v-12a8,8 0 0 1 8,-8z" />
+</vector>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Traductor · 100% offline · Offline translator for Android</title>
+<meta name="description" content="Traductor — traductor de texto, voz y fotos 100% offline para Android, con LLM, Whisper, VAD, OCR y TTS locales. / Fully offline text, voice and photo translator for Android." />
+<link rel="icon" href="icon.png" />
+<meta name="theme-color" content="#0A84FF" />
+<style>
+  :root {
+    --blue: #0a84ff;
+    --blue-2: #4fa8ff;
+    --blue-deep: #0a6fd8;
+    --radius: 18px;
+    --maxw: 940px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --shadow: 0 10px 30px rgba(10, 132, 255, .18);
+    --bg: #f5f7fb;
+    --bg-2: #ffffff;
+    --card: #ffffff;
+    --text: #101827;
+    --muted: #5a6472;
+    --border: #e3e8f0;
+    --code-bg: #0f1724;
+    --code-fg: #d7e3f4;
+  }
+  html[data-theme="dark"] {
+    --bg: #0f1115;
+    --bg-2: #141821;
+    --card: #1b1f26;
+    --text: #e6e8eb;
+    --muted: #9aa0a6;
+    --border: #2b313b;
+    --code-bg: #0a0d13;
+    --code-fg: #cfe0f5;
+    --shadow: 0 12px 34px rgba(0, 0, 0, .45);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font); line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+
+  /* ---------- top bar ---------- */
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: saturate(180%) blur(14px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .top .wrap { display: flex; align-items: center; gap: 12px; height: 62px; }
+  .top img { width: 30px; height: 30px; border-radius: 8px; }
+  .top .brand { font-weight: 700; letter-spacing: -.2px; }
+  .top .spacer { flex: 1; }
+  .switch { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .switch button {
+    border: 0; background: transparent; color: var(--muted); cursor: pointer;
+    padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 600;
+  }
+  .switch button[aria-pressed="true"] { background: var(--blue); color: #fff; }
+  #themeBtn {
+    border: 1px solid var(--border); background: transparent; color: var(--text);
+    border-radius: 999px; cursor: pointer; width: 38px; height: 34px; font-size: 15px;
+  }
+
+  /* ---------- hero ---------- */
+  .hero { text-align: center; padding: 64px 0 26px; }
+  .hero .appicon {
+    width: 132px; height: 132px; border-radius: 30px; box-shadow: var(--shadow);
+  }
+  .hero h1 { font-size: clamp(30px, 6vw, 46px); margin: 22px 0 6px; letter-spacing: -.03em; }
+  .hero p.tag { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); margin: 0 auto; max-width: 640px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+  .badge {
+    font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+    background: color-mix(in srgb, var(--blue) 14%, transparent);
+    color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
+  }
+
+  /* ---------- nav ---------- */
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 22px 0 8px; }
+  nav.toc a {
+    font-size: 13px; color: var(--muted); border: 1px solid var(--border);
+    padding: 5px 11px; border-radius: 999px; background: var(--card);
+  }
+  nav.toc a:hover { color: var(--blue); border-color: var(--blue); text-decoration: none; }
+
+  /* ---------- sections ---------- */
+  section { padding: 34px 0; }
+  h2 { font-size: 25px; letter-spacing: -.02em; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+  h2::before { content: ""; width: 6px; height: 22px; border-radius: 3px; background: linear-gradient(var(--blue-2), var(--blue-deep)); }
+  .lead { color: var(--muted); margin: 0 0 16px; }
+  h3 { font-size: 17px; margin: 22px 0 6px; }
+  p { margin: 8px 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .card .ico { font-size: 22px; }
+  .card h3 { margin: 8px 0 4px; font-size: 15.5px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 14px 0 0; }
+  ol.steps li {
+    position: relative; padding: 12px 16px 12px 56px; margin: 10px 0;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  }
+  ol.steps li::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 14px; top: 12px;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: linear-gradient(var(--blue-2), var(--blue-deep)); color: #fff;
+    font-weight: 700; font-size: 14px;
+  }
+  ol.steps b { color: var(--text); }
+
+  pre {
+    background: var(--code-bg); color: var(--code-fg); padding: 16px 18px;
+    border-radius: 14px; overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.55; margin: 12px 0;
+  }
+  code { font-family: var(--mono); font-size: .92em; }
+  p code, li code, td code {
+    background: color-mix(in srgb, var(--blue) 12%, transparent);
+    color: var(--blue); padding: 1px 6px; border-radius: 6px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+
+  .note {
+    border-left: 4px solid var(--blue); background: color-mix(in srgb, var(--blue) 9%, transparent);
+    padding: 12px 16px; border-radius: 0 12px 12px 0; margin: 14px 0; font-size: 14.5px;
+  }
+  .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+
+  footer {
+    border-top: 1px solid var(--border); margin-top: 30px; padding: 30px 0 46px;
+    text-align: center; color: var(--muted); font-size: 14px;
+  }
+  footer .heart { color: #ff5a7a; }
+  /* La regla NO debe alcanzar al propio <html data-lang=…>, solo a su contenido. */
+  body [data-lang] { display: none; }
+  html[data-lang="es"] [data-lang="es"], html[data-lang="en"] [data-lang="en"] { display: block; }
+  span[data-lang] { display: none; }
+  html[data-lang="es"] span[data-lang="es"], html[data-lang="en"] span[data-lang="en"] { display: inline; }
+  @media (max-width: 560px) { .top .brand { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <img src="icon.png" alt="Traductor" />
+    <span class="brand">Traductor</span>
+    <span class="spacer"></span>
+    <span class="switch" role="group" aria-label="Idioma / Language">
+      <button id="lang-es" aria-pressed="true" onclick="setLang('es')">ES</button>
+      <button id="lang-en" aria-pressed="false" onclick="setLang('en')">EN</button>
+    </span>
+    <button id="themeBtn" title="Tema / Theme" aria-label="Tema / Theme" onclick="toggleTheme()">🌙</button>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <img class="appicon" src="icon.png" alt="Icono de Traductor" />
+  <h1>Traductor</h1>
+  <p class="tag">
+    <span data-lang="es">Traduce texto, voz y fotos <b>100% offline</b>. Sin nube, sin cuentas, sin rastreo.</span>
+    <span data-lang="en">Translate text, voice and photos <b>100% offline</b>. No cloud, no accounts, no tracking.</span>
+  </p>
+  <div class="badges">
+    <span class="badge">Android 8+ · arm64-v8a</span>
+    <span class="badge">100% offline</span>
+    <span class="badge">Kotlin + JNI / C++</span>
+    <span class="badge">Open source</span>
+  </div>
+</div>
+
+<nav class="toc wrap">
+  <a href="#que"><span data-lang="es">Qué es</span><span data-lang="en">Overview</span></a>
+  <a href="#features"><span data-lang="es">Características</span><span data-lang="en">Features</span></a>
+  <a href="#pipeline"><span data-lang="es">Cómo funciona</span><span data-lang="en">How it works</span></a>
+  <a href="#modelos"><span data-lang="es">Modelos</span><span data-lang="en">Models</span></a>
+  <a href="#privacidad"><span data-lang="es">Privacidad</span><span data-lang="en">Privacy</span></a>
+  <a href="#compilar"><span data-lang="es">Compilar</span><span data-lang="en">Build</span></a>
+  <a href="#creditos"><span data-lang="es">Créditos</span><span data-lang="en">Credits</span></a>
+</nav>
+
+<section id="que" class="wrap">
+  <h2><span data-lang="es">Qué es</span><span data-lang="en">What is it</span></h2>
+  <div data-lang="es">
+    <p class="lead">Traductor es una app nativa de Android que traduce <b>texto, voz y fotos</b> sin salir nunca del dispositivo.</p>
+    <p>Los modelos de inteligencia artificial se descargan una sola vez (primera ejecución, se recomienda Wi-Fi) y a partir de ahí todo —la traducción, el reconocimiento de voz, el OCR y la lectura en voz alta— ocurre en el teléfono. Puedes usarla en modo avión.</p>
+  </div>
+  <div data-lang="en">
+    <p class="lead">Traductor is a native Android app that translates <b>text, voice and photos</b> without ever leaving the device.</p>
+    <p>The AI models are downloaded once (first run, Wi-Fi recommended) and from then on everything —translation, speech recognition, OCR and read-aloud— happens on the phone. You can use it in airplane mode.</p>
+  </div>
+  <div class="note">
+    <span data-lang="es">🔒 Sin cuentas, sin anuncios, sin analíticas. Tu voz, tus fotos y tus textos no salen del teléfono.</span>
+    <span data-lang="en">🔒 No accounts, no ads, no analytics. Your voice, photos and text never leave the phone.</span>
+  </div>
+</section>
+
+<section id="features" class="wrap">
+  <h2><span data-lang="es">Características</span><span data-lang="en">Features</span></h2>
+  <div class="grid">
+    <div class="card"><div class="ico">🌍</div>
+      <h3><span data-lang="es">17+ idiomas</span><span data-lang="en">17+ languages</span></h3>
+      <p><span data-lang="es">Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano…</span><span data-lang="en">Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian…</span></p>
+    </div>
+    <div class="card"><div class="ico">⌨️</div>
+      <h3><span data-lang="es">Traducción de texto</span><span data-lang="en">Text translation</span></h3>
+      <p><span data-lang="es">Escribe o pega el texto; la traducción aparece al instante con selector de idioma origen/destino.</span><span data-lang="en">Type or paste text; the translation appears instantly with source/target language selectors.</span></p>
+    </div>
+    <div class="card"><div class="ico">🎤</div>
+      <h3><span data-lang="es">Voz a texto</span><span data-lang="en">Speech to text</span></h3>
+      <p><span data-lang="es">ASR Whisper + detector de voz (VAD): pulsa el micro, habla con naturalidad y se recorta solo lo que hablas.</span><span data-lang="en">Whisper ASR + voice activity detection (VAD): tap the mic, speak naturally, and only speech is captured.</span></p>
+    </div>
+    <div class="card"><div class="ico">📷</div>
+      <h3><span data-lang="es">Fotos (OCR)</span><span data-lang="en">Photos (OCR)</span></h3>
+      <p><span data-lang="es">Cámara o galería. El texto se reconoce offline, queda editable y se traduce.</span><span data-lang="en">Camera or gallery. Text is recognized offline, stays editable and gets translated.</span></p>
+    </div>
+    <div class="card"><div class="ico">🔊</div>
+      <h3><span data-lang="es">Lectura offline</span><span data-lang="en">Offline read-aloud</span></h3>
+      <p><span data-lang="es">Voces neuronales Piper (femeninas, ES/EN/FR/DE…) o el motor del sistema como reserva.</span><span data-lang="en">Piper neural voices (female, ES/EN/FR/DE…) or the system engine as fallback.</span></p>
+    </div>
+    <div class="card"><div class="ico">🕘</div>
+      <h3><span data-lang="es">Historial</span><span data-lang="en">History</span></h3>
+      <p><span data-lang="es">Tus traducciones se guardan localmente y puedes volver a consultarlas.</span><span data-lang="en">Your translations are stored locally and can be revisited.</span></p>
+    </div>
+    <div class="card"><div class="ico">⚙️</div>
+      <h3><span data-lang="es">Gestor de modelos</span><span data-lang="en">Model manager</span></h3>
+      <p><span data-lang="es">Descarga o importa modelos GGUF, Whisper y voces Piper desde Ajustes.</span><span data-lang="en">Download or import GGUF, Whisper models and Piper voices from Settings.</span></p>
+    </div>
+    <div class="card"><div class="ico">🔒</div>
+      <h3><span data-lang="es">Privacidad total</span><span data-lang="en">Total privacy</span></h3>
+      <p><span data-lang="es">Nada sale del teléfono. Sin anuncios, sin analíticas, sin servidores.</span><span data-lang="en">Nothing leaves the phone. No ads, no analytics, no servers.</span></p>
+    </div>
+  </div>
+</section>
+
+<section id="pipeline" class="wrap">
+  <h2><span data-lang="es">Cómo funciona</span><span data-lang="en">How it works</span></h2>
+  <p class="lead">
+    <span data-lang="es">Un único pipeline (Kotlin) alimenta el motor local (C++/JNI).</span>
+    <span data-lang="en">A single pipeline (Kotlin) drives the local engine (C++/JNI).</span>
+  </p>
+  <ol class="steps">
+    <li><b><span data-lang="es">Entrada</span><span data-lang="en">Input</span></b><span data-lang="es"> — texto tecleado, audio del micro o una foto (cámara/galería).</span><span data-lang="en"> — typed text, mic audio or a photo (camera/gallery).</span></li>
+    <li><b>VAD / OCR</b><span data-lang="es"> — Silero VAD recorta el habla; PaddleOCR PP-OCR extrae el texto de la imagen. Ambos con ONNX Runtime.</span><span data-lang="en"> — Silero VAD trims the speech; PaddleOCR PP-OCR extracts text from the image. Both via ONNX Runtime.</span></li>
+    <li><b>Whisper (ASR)</b><span data-lang="es"> — si la entrada fue la voz, <code>whisper.cpp</code> la transcribe offline al idioma origen.</span><span data-lang="en"> — if the input was speech, <code>whisper.cpp</code> transcribes it offline in the source language.</span></li>
+    <li><b>Qwen (LLM)</b><span data-lang="es"> — <code>llama.cpp</code> ejecuta el modelo Qwen3.5-0.8B con un prompt de traducción; se limpia el resultado.</span><span data-lang="en"> — <code>llama.cpp</code> runs the Qwen3.5-0.8B model with a translation prompt; the output is cleaned up.</span></li>
+    <li><b>Piper (TTS)</b><span data-lang="es"> — opcionalmente, la traducción se lee en voz alta con una voz neuronal local.</span><span data-lang="en"> — optionally, the translation is read aloud with a local neural voice.</span></li>
+    <li><b>Historial</b><span data-lang="es"> — el par origen → traducción se guarda en una base de datos local.</span><span data-lang="en"> — the source → translation pair is saved to a local database.</span></li>
+  </ol>
+  <pre><code>text  ─────────▶ ┌────────────────────┐        ┌──────────────┐
+mic  ─▶ VAD ────▶ │ TranslationPipeline│ ─────▶ │  llama.cpp   │  Qwen3.5 GGUF
+photo ─▶ OCR ───▶ └────────────────────┘        └──────────────┘
+                          │                       ┌──────────────┐
+                          └─────────────────────▶ │ whisper.cpp  │  Whisper ASR
+                                                  └──────────────┘
+        ONNX Runtime:  Silero VAD · PaddleOCR      sherpa-onnx: Piper TTS</code></pre>
+</section>
+
+<section id="modelos" class="wrap">
+  <h2><span data-lang="es">Modelos y primer uso</span><span data-lang="en">Models and first run</span></h2>
+  <div data-lang="es">
+    <p>La primera vez, la app descarga los modelos (~700 MB en total) y los guarda en su almacenamiento privado. Después ya no necesita red.</p>
+  </div>
+  <div data-lang="en">
+    <p>On first run the app downloads the models (~700 MB in total) into its private storage. After that it no longer needs the network.</p>
+  </div>
+  <table>
+    <tr>
+      <th><span data-lang="es">Componente</span><span data-lang="en">Component</span></th>
+      <th><span data-lang="es">Modelo</span><span data-lang="en">Model</span></th>
+      <th><span data-lang="es">Tamaño aprox.</span><span data-lang="en">Approx. size</span></th>
+    </tr>
+    <tr><td><span data-lang="es">Traducción</span><span data-lang="en">Translation</span></td><td>Qwen3.5-0.8B Q4_K_M (GGUF)</td><td>~503 MB</td></tr>
+    <tr><td><span data-lang="es">Voz (ASR)</span><span data-lang="en">Speech (ASR)</span></td><td>Whisper ggml-tiny / base / small</td><td>74 – 465 MB</td></tr>
+    <tr><td>VAD</td><td>Silero VAD (ONNX)</td><td>~2,2 MB</td></tr>
+    <tr><td>OCR</td><td>PaddleOCR PP-OCRv6 tiny (det + rec)</td><td>~6 MB</td></tr>
+    <tr><td>TTS</td><td><span data-lang="es">Voz Piper (es/en/fr/de…)</span><span data-lang="en">Piper voice (es/en/fr/de…)</span></td><td>~25 – 110 MB</td></tr>
+  </table>
+  <p>
+    <span data-lang="es">Todos los modelos se pueden importar manualmente desde el almacenamiento si ya los tienes. En Ajustes puedes ver, activar y borrar cada modelo.</span>
+    <span data-lang="en">Every model can also be imported manually from storage if you already have it. In Settings you can view, activate and delete each model.</span>
+  </p>
+</section>
+
+<section id="privacidad" class="wrap">
+  <h2><span data-lang="es">Privacidad</span><span data-lang="en">Privacy</span></h2>
+  <div class="privacy-grid">
+    <div class="card"><h3><span data-lang="es">Todo es local</span><span data-lang="en">Everything is local</span></h3>
+      <p><span data-lang="es">Traducción, voz, OCR y TTS se ejecutan en el dispositivo. Nunca se sube texto, audio ni imágenes.</span><span data-lang="en">Translation, speech, OCR and TTS run on the device. Text, audio and images are never uploaded.</span></p></div>
+    <div class="card"><h3><span data-lang="es">Sin rastreadores</span><span data-lang="en">No trackers</span></h3>
+      <p><span data-lang="es">Sin cuentas, sin analíticas, sin anuncios, sin publicidad.</span><span data-lang="en">No accounts, no analytics, no ads.</span></p></div>
+    <div class="card"><h3><span data-lang="es">Red solo para modelos</span><span data-lang="en">Network only for models</span></h3>
+      <p><span data-lang="es">La conexión se usa únicamente para descargar modelos desde repositorios oficiales (HuggingFace / GitHub).</span><span data-lang="en">The connection is used only to download models from official repositories (HuggingFace / GitHub).</span></p></div>
+    <div class="card"><h3><span data-lang="es">Permisos mínimos</span><span data-lang="en">Minimal permissions</span></h3>
+      <p><span data-lang="es">INTERNET, RECORD_AUDIO y CAMERA (opcional). La galería usa el selector del sistema, sin permisos.</span><span data-lang="en">INTERNET, RECORD_AUDIO and CAMERA (optional). The gallery uses the system picker, with no permissions.</span></p></div>
+  </div>
+</section>
+
+<section id="compilar" class="wrap">
+  <h2><span data-lang="es">Compilar</span><span data-lang="en">Build</span></h2>
+  <div data-lang="es">
+    <p>Requisitos: JDK 17, Android SDK 35, NDK 27.0.12077973, CMake 3.22.1. Las librerías nativas (<code>llama.cpp</code> y <code>whisper.cpp</code>) se compilan con el NDK en <code>arm64-v8a</code>.</p>
+  </div>
+  <div data-lang="en">
+    <p>Requirements: JDK 17, Android SDK 35, NDK 27.0.12077973, CMake 3.22.1. The native libraries (<code>llama.cpp</code> and <code>whisper.cpp</code>) are built with the NDK for <code>arm64-v8a</code>.</p>
+  </div>
+  <pre><code># 1. Native libraries / Librerías nativas
+./scripts/fetch-deps.sh
+./scripts/build_native.sh
+
+# 2. The app / La app
+./gradlew :app:assembleDebug
+./gradlew :app:testDebugUnitTest
+
+# 3. Install / Instalar
+adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
+  <p><span data-lang="es">APK de depuración: <code>app/build/outputs/apk/debug/app-debug.apk</code> (solo arm64-v8a).</span><span data-lang="en">Debug APK: <code>app/build/outputs/apk/debug/app-debug.apk</code> (arm64-v8a only).</span></p>
+</section>
+
+<section id="creditos" class="wrap">
+  <h2><span data-lang="es">Créditos</span><span data-lang="en">Credits</span></h2>
+  <div class="note" style="border-left-color:#0a84ff;">
+    <span data-lang="es"><b>Creado por Andres Mag · Cuba 🇨🇺.</b></span>
+    <span data-lang="en"><b>Created by Andres Mag · Cuba 🇨🇺.</b></span>
+  </div>
+  <p><span data-lang="es">Traductor se apoya en proyectos de código abierto:</span><span data-lang="en">Traductor stands on open-source projects:</span></p>
+  <table>
+    <tr><th><span data-lang="es">Proyecto</span><span data-lang="en">Project</span></th><th><span data-lang="es">Uso</span><span data-lang="en">Use</span></th><th><span data-lang="es">Licencia</span><span data-lang="en">License</span></th></tr>
+    <tr><td><a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a></td><td><span data-lang="es">Inferencia LLM local</span><span data-lang="en">Local LLM inference</span></td><td>MIT</td></tr>
+    <tr><td><a href="https://github.com/ggml-org/whisper.cpp">whisper.cpp</a></td><td><span data-lang="es">Reconocimiento de voz</span><span data-lang="en">Speech recognition</span></td><td>MIT</td></tr>
+    <tr><td><a href="https://github.com/k2-fsa/sherpa-onnx">sherpa-onnx</a></td><td><span data-lang="es">Runtime de Piper TTS</span><span data-lang="en">Piper TTS runtime</span></td><td>Apache-2.0</td></tr>
+    <tr><td><a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a></td><td><span data-lang="es">OCR de fotos</span><span data-lang="en">Photo OCR</span></td><td>Apache-2.0</td></tr>
+    <tr><td><a href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a></td><td><span data-lang="es">VAD + OCR</span><span data-lang="en">VAD + OCR</span></td><td>MIT</td></tr>
+    <tr><td><a href="https://github.com/rhasspy/piper">Piper</a> / <a href="https://github.com/espeak-ng/espeak-ng">espeak-ng</a></td><td><span data-lang="es">Voces neuronales</span><span data-lang="en">Neural voices</span></td><td>MIT / GPL-3.0</td></tr>
+    <tr><td><a href="https://huggingface.co/lmstudio-community/Qwen3.5-0.8B-GGUF">Qwen3.5-0.8B</a></td><td><span data-lang="es">Modelo de traducción</span><span data-lang="en">Translation model</span></td><td>Apache-2.0</td></tr>
+  </table>
+</section>
+
+<footer class="wrap">
+  <p>Traductor <b>v0.6.0</b> · <span data-lang="es">Hecho con</span><span data-lang="en">Made with</span> <span class="heart">♥</span> <span data-lang="es">en Cuba 🇨🇺 · 100% offline</span><span data-lang="en">in Cuba 🇨🇺 · 100% offline</span></p>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    // ---- theme ----
+    var saved = null;
+    try { saved = localStorage.getItem("traductor-theme"); } catch (e) {}
+    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var theme = saved || (prefersDark ? "dark" : "light");
+    applyTheme(theme);
+
+    function applyTheme(t) {
+      root.setAttribute("data-theme", t);
+      var b = document.getElementById("themeBtn");
+      if (b) { b.textContent = t === "dark" ? "☀️" : "🌙"; }
+    }
+    window.toggleTheme = function () {
+      var t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(t);
+      try { localStorage.setItem("traductor-theme", t); } catch (e) {}
+    };
+
+    // ---- language ----
+    var lang = null;
+    try { lang = localStorage.getItem("traductor-lang"); } catch (e) {}
+    if (!lang) { lang = (navigator.language || "es").toLowerCase().indexOf("es") === 0 ? "es" : "en"; }
+    setLang(lang);
+
+    function setLang(l) {
+      root.setAttribute("data-lang", l);
+      root.setAttribute("lang", l);
+      var es = document.getElementById("lang-es"), en = document.getElementById("lang-en");
+      if (es) es.setAttribute("aria-pressed", String(l === "es"));
+      if (en) en.setAttribute("aria-pressed", String(l === "en"));
+      try { localStorage.setItem("traductor-lang", l); } catch (e) {}
+    }
+    window.setLang = setLang;
+  })();
+</script>
+</body>
+</html>

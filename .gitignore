@@ -1,0 +1,52 @@
+# ---------------- Android / Gradle ----------------
+build/
+app/build/
+.gradle/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+app/.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+
+# ---------------- Native (llama.cpp / whisper.cpp) ----------------
+# Las fuentes de los vendor viven como submódulos git (ver .gitmodules).
+# Los artefactos compilados NO se versionan: se regeneran con scripts/build_native.sh.
+.nativebuild/
+app/src/main/cpp/prebuilt/
+prebuilt/
+*.o
+*.a
+obj/
+libs/arm64-v8a/*.a
+
+# ---------------- Local / IDE ----------------
+local.properties
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+.settings/
+.vscode/
+*.log
+*.hprof
+
+# ---------------- Keystores / secretos ----------------
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# ---------------- Caches ----------------
+.cache/
+.tmp/
+*.tmp

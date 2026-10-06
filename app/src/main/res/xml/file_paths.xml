@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Fotos temporales de la cámara para el OCR (se borran con la caché). -->
+    <cache-path name="camera" path="camera/" />
+</paths>
