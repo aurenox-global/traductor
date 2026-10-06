@@ -91,7 +91,9 @@
 
     <!-- Acerca de / créditos -->
     <string name="settings_about_title">Acerca de</string>
-    <string name="settings_about_version">Versión %1$s</string>
+    <string name="settings_about_version">Versión %1$s · %2$s</string>
+    <string name="variant_full">FULL (modelos incluidos, sin descargas)</string>
+    <string name="variant_lite">LITE (descarga inicial)</string>
     <string name="settings_credit">Creado por %1$s · Cuba</string>
     <string name="settings_credit_author">Andres Mag</string>
     <string name="settings_footer_note">100% offline · la primera descarga requiere conexión</string>

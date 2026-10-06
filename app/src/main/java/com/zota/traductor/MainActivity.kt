@@ -406,11 +406,11 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
                     BundledAssets.ensureAll(
                         this@MainActivity,
                         onStatus = { s -> runOnUiThread { setStatus(s) } },
-                        onProgress = { done, total -> runOnUiThread { setDownloadProgress(done, total) } }
+                        onProgress = { done, total -> runOnUiThread { setCopyProgress(done, total) } }
                     )
                     BundledAssets.applyDefaults(this@MainActivity)
                 } catch (t: Throwable) {
-                    runOnUiThread { setStatus("Fallo copiando modelos incluidos: ${t.message}") }
+                    runOnUiThread { setStatus("No se pudieron copiar los modelos incluidos (${t.message}). Se intentará descargar.") }
                 }
             }
             b.progressDownload.visibility = View.GONE
@@ -425,7 +425,7 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
         withContext(Dispatchers.IO) {
             for (spec in pending) {
                 try {
-                    runOnUiThread { setStatus("Descargando ${spec.label} …") }
+                    runOnUiThread { setStatus("Descargando ${spec.label}… (necesita internet)") }
                     ModelManager.download(this@MainActivity, spec) { done, total ->
                         runOnUiThread { setDownloadProgress(done, total) }
                     }
@@ -505,6 +505,17 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
         } else {
             b.txtStatus.text = "Descargando… ${ModelManager.human(done)}"
         }
+    }
+
+    /**
+     * Progreso de la COPIA desde el APK (variante FULL). NO es una descarga:
+     * los modelos ya vienen dentro de la app y solo se copian al almacenamiento.
+     */
+    private fun setCopyProgress(done: Long, total: Long) {
+        if (total > 0) b.progressDownload.progress = ((done * 1000) / total).toInt().coerceIn(0, 1000)
+        val human = if (total > 0) "${ModelManager.human(done)} / ${ModelManager.human(total)}"
+        else ModelManager.human(done)
+        b.txtStatus.text = "Copiando modelos incluidos en la APK… $human  ·  sin internet"
     }
 
     // ---------------- Callbacks del pipeline ----------------

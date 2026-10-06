@@ -77,7 +77,11 @@ class SettingsActivity : AppCompatActivity() {
     /** Seccion "Acerca de" + credito del autor. */
     private fun bindAbout() {
         b.txtAboutApp.text = getString(R.string.app_name)
-        b.txtAboutVersion.text = getString(R.string.settings_about_version, appVersionName())
+        b.txtAboutVersion.text = getString(
+            R.string.settings_about_version,
+            appVersionName(),
+            getString(if (BundledAssets.enabled) R.string.variant_full else R.string.variant_lite)
+        )
         val author = getString(R.string.settings_credit_author)
         val credit = getString(R.string.settings_credit, author)
         val sp = android.text.SpannableString(credit)
