@@ -203,7 +203,7 @@ class CoreTest {
     fun piper_catalogo_prefiere_femeninas_con_excepciones() {
         // Preferencia del usuario: voces FEMENINAS. Solo se admite una voz masculina
         // cuando es la ÚNICA disponible para ese idioma (y queda marcada como "M").
-        val maleOnly = setOf("ar", "tr", "bg", "ro")
+        val maleOnly = setOf("ar", "tr", "bg", "ro", "da", "fa", "fi", "he")
         for (s in PiperVoiceManager.CATALOG) {
             if (s.lang in maleOnly) {
                 assertEquals("deberia ser masculina: ${s.id}", "M", s.gender)
@@ -254,6 +254,86 @@ class CoreTest {
         // Unicidad de ids.
         val ids = PiperVoiceManager.CATALOG.map { it.id }
         assertEquals("ids duplicados", ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun piper_catalogo_cubre_todos_los_idiomas_de_la_app() {
+        // v0.9: TODOS los idiomas destino de Languages.kt tienen al menos una voz Piper.
+        for (code in Languages.TARGETS.map { it.code }) {
+            assertTrue(
+                "falta voz Piper para $code",
+                PiperVoiceManager.CATALOG.any { it.lang == code }
+            )
+        }
+        // Y el catálogo no declara idiomas que la app no ofrezca.
+        val appCodes = Languages.TARGETS.map { it.code }.toSet()
+        for (s in PiperVoiceManager.CATALOG) {
+            assertTrue("el catálogo tiene un idioma ajeno a la app: ${s.lang}", s.lang in appCodes)
+        }
+    }
+
+    @Test
+    fun piper_catalogo_cubre_los_dieciseis_idiomas_nuevos() {
+        // v0.9: una voz por cada idioma nuevo. Género según la medición F0 real (ver doc).
+        // Femeninas: bn/ca/cs/el/id/nl/no/pt/sv/th/uk/vi.
+        // Masculinas (única o todas las opciones masculinas): da/fa/fi/he.
+        val expected = mapOf(
+            "bn" to ("bn_BD-google-medium" to "F"),
+            "ca" to ("ca_ES-upc_ona-medium" to "F"),
+            "cs" to ("cs_CZ-kasandra-medium" to "F"),
+            "da" to ("da_DK-talesyntese-medium" to "M"),
+            "el" to ("el_GR-joy-medium" to "F"),
+            "fa" to ("fa_IR-amir-medium" to "M"),
+            "fi" to ("fi_FI-harri-medium" to "M"),
+            "he" to ("he_IL-saspeech-medium" to "M"),
+            "id" to ("id_ID-news_tts-medium" to "F"),
+            "nl" to ("nl_BE-nathalie-medium" to "F"),
+            "no" to ("no_NO-nvcc-medium" to "F"),
+            "pt" to ("pt_PT-tugão-medium" to "F"),
+            "sv" to ("sv_SE-alma-medium" to "F"),
+            "th" to ("th_TH-tsync2-medium" to "F"),
+            "uk" to ("uk_UA-tetiana-high" to "F"),
+            "vi" to ("vi_VN-25hours_single-low" to "F")
+        )
+        for ((lang, pair) in expected) {
+            val (id, gender) = pair
+            val spec = PiperVoiceManager.CATALOG.firstOrNull { it.id == id }
+            assertTrue("falta la voz $id", spec != null)
+            assertEquals("idioma de $id", lang, spec!!.lang)
+            assertEquals("género de $id", gender, spec.gender)
+            assertTrue("label sin nombre: ${spec.label}", spec.label.contains("·"))
+        }
+        // Multi-speaker: la voz femenina está en un speaker concreto.
+        assertEquals(12, PiperVoiceManager.CATALOG.first { it.id == "bn_BD-google-medium" }.speakerId)
+        assertEquals(3, PiperVoiceManager.CATALOG.first { it.id == "no_NO-nvcc-medium" }.speakerId)
+        // Unicidad de ids (catálogo completo, ahora con muchos más idiomas).
+        val ids = PiperVoiceManager.CATALOG.map { it.id }
+        assertEquals("ids duplicados", ids.size, ids.toSet().size)
+    }
+
+    @Test
+    fun piper_catalogo_voces_crudas_v09_sin_paquete() {
+        // Voces v0.9 sin paquete sherpa (HTTP 404): tarUrl vacío + ruta cruda correcta.
+        val raw = listOf(
+            "bn_BD-google-medium" to "bn/bn_BD/google/medium",
+            "cs_CZ-kasandra-medium" to "cs/cs_CZ/kasandra/medium",
+            "el_GR-joy-medium" to "el/el_GR/joy/medium",
+            "he_IL-saspeech-medium" to "he/he_IL/saspeech/medium",
+            "no_NO-nvcc-medium" to "no/no_NO/nvcc/medium",
+            "pt_PT-tugão-medium" to "pt/pt_PT/tugão/medium",
+            "th_TH-tsync2-medium" to "th/th_TH/tsync2/medium",
+            "uk_UA-tetiana-high" to "uk/uk_UA/tetiana/high"
+        )
+        for ((id, path) in raw) {
+            val s = PiperVoiceManager.CATALOG.first { it.id == id }
+            assertEquals("tarUrl debe estar vacío en $id", "", s.tarUrl)
+            assertEquals(
+                "onnxUrl incorrecta en $id",
+                "https://huggingface.co/rhasspy/piper-voices/resolve/main/$path/$id.onnx",
+                s.onnxUrl
+            )
+            assertTrue("approxBytes irreal en $id", s.approxBytes > 10_000_000L)
+        }
     }
 
     @Test

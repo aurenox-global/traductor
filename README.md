@@ -44,7 +44,7 @@ once the models are downloaded, the app works in airplane mode.
 | ⌨️ **Text translation** | Type or paste, with an ES/EN translated interface and language selector. |
 | 🎤 **Voice translation** | Whisper ASR + VAD: press the mic, speak naturally, get text. |
 | 📷 **Photo translation (OCR)** | Camera or gallery → offline text extraction → editable input → translation. |
-| 🔊 **Offline TTS** | Piper neural voices for 14 languages (ES, EN, FR, DE, IT, ZH, PL, AR, TR, KO, BG, HU, RO, JA): **female by preference**, male only when it is a language's only voice (AR, TR, BG, RO). System engine as fallback. |
+| 🔊 **Offline TTS** | Piper neural voices for all 32 languages (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA): **female by preference**, male only when it is a language's only voice or all its voices are male (AR, TR, BG, RO, DA, FA, FI, HE). System engine as fallback. |
 | 🕘 **History** | Your translations are stored locally and can be revisited. |
 | ⚙️ **Model manager** | Download or import GGUF/Whisper/Piper models from storage. |
 | 🔒 **Private by design** | Nothing leaves the phone. No ads, no analytics, no servers. |
@@ -92,14 +92,30 @@ is the *only* voice available for that language, and it is labelled as such (♂
 | Korean | `ko_KR-kss-medium` | 306 Hz | ♀ female |
 | Hungarian | `hu_HU-anna-medium` | 184 Hz | ♀ female |
 | Japanese | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ female |
-| Arabic | `ar_JO-kareem-medium` | 106 Hz | ♂ male (only option) |
-| Turkish | `tr_TR-dfki-medium` | 109 Hz | ♂ male (only option) |
-| Bulgarian | `bg_BG-dimitar-medium` | 113 Hz | ♂ male (only option) |
-| Romanian | `ro_RO-mihai-medium` | 130 Hz | ♂ male (only option) |
+| Russian | `ru_RU-irina-medium` | 176 Hz | ♀ female |
+| Hindi | `hi_IN-priyamvada-medium` | 192 Hz | ♀ female |
+| Bengali | `bn_BD-google-medium` (speaker 12) | 264 Hz | ♀ female |
+| Catalan | `ca_ES-upc_ona-medium` | 179 Hz | ♀ female |
+| Czech | `cs_CZ-kasandra-medium` | 227 Hz | ♀ female |
+| Greek | `el_GR-joy-medium` | 196 Hz | ♀ female |
+| Indonesian | `id_ID-news_tts-medium` | 256 Hz | ♀ female |
+| Dutch | `nl_BE-nathalie-medium` | 175 Hz | ♀ female |
+| Norwegian | `no_NO-nvcc-medium` (speaker 3) | 245 Hz | ♀ female |
+| Portuguese | `pt_PT-tugão-medium` | 189 Hz | ♀ female |
+| Swedish | `sv_SE-alma-medium` | 184 Hz | ♀ female |
+| Thai | `th_TH-tsync2-medium` | 221 Hz | ♀ female |
+| Ukrainian | `uk_UA-tetiana-high` | 210 Hz | ♀ female |
+| Vietnamese | `vi_VN-25hours_single-low` | 225 Hz | ♀ female |
+| Danish | `da_DK-talesyntese-medium` | 115 Hz | ♂ male (only option) |
+| Persian | `fa_IR-amir-medium` | 154 Hz | ♂ male (all options male) |
+| Finnish | `fi_FI-harri-medium` | 102 Hz | ♂ male (only option) |
+| Hebrew | `he_IL-saspeech-medium` | 146 Hz | ♂ male (only option) |
 
-Korean, Bulgarian and Japanese have no official sherpa-onnx package, so the raw
-rhasspy files (`.onnx` + `.onnx.json`) are downloaded and converted **on the device**
-(tokens.txt from `phoneme_id_map` + Piper metadata embedded in the `.onnx`).
+Every language of the app now has a Piper voice. Korean, Bulgarian, Japanese,
+Bengali, Czech, Greek, Hebrew, Norwegian, Portuguese, Thai and Ukrainian have no
+official sherpa-onnx package, so the raw rhasspy files (`.onnx` + `.onnx.json`) are
+downloaded and converted **on the device** (tokens.txt from `phoneme_id_map` +
+Piper metadata embedded in the `.onnx`).
 
 ### Requirements
 
@@ -219,7 +235,7 @@ descargados los modelos, funciona incluso en modo avión.
 | ⌨️ **Traducción de texto** | Escribe o pega, con interfaz traducida ES/EN y selector de idiomas. |
 | 🎤 **Traducción de voz** | ASR Whisper + VAD: pulsa el micro, habla con naturalidad y obtén el texto. |
 | 📷 **Traducción de fotos (OCR)** | Cámara o galería → extracción de texto offline → entrada editable → traducción. |
-| 🔊 **TTS offline** | Voces neuronales Piper para 14 idiomas (ES, EN, FR, DE, IT, ZH, PL, AR, TR, KO, BG, HU, RO, JA): **femeninas por preferencia**, masculinas solo cuando son la única voz del idioma (AR, TR, BG, RO). Motor del sistema como reserva. |
+| 🔊 **TTS offline** | Voces neuronales Piper para los 32 idiomas (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA): **femeninas por preferencia**, masculinas solo cuando son la única voz del idioma o todas sus voces son masculinas (AR, TR, BG, RO, DA, FA, FI, HE). Motor del sistema como reserva. |
 | 🕘 **Historial** | Tus traducciones se guardan en local y puedes consultarlas. |
 | ⚙️ **Gestor de modelos** | Descarga o importa modelos GGUF/Whisper/Piper desde el almacenamiento. |
 | 🔒 **Privacidad por diseño** | Nada sale del teléfono. Sin anuncios, sin analíticas, sin servidores. |
@@ -268,14 +284,30 @@ F0, del audio sintetizado: femenina ≈ 165–250 Hz). Solo se incluye una voz
 | Coreano | `ko_KR-kss-medium` | 306 Hz | ♀ femenina |
 | Húngaro | `hu_HU-anna-medium` | 184 Hz | ♀ femenina |
 | Japonés | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ femenina |
-| Árabe | `ar_JO-kareem-medium` | 106 Hz | ♂ masculina (única) |
-| Turco | `tr_TR-dfki-medium` | 109 Hz | ♂ masculina (única) |
-| Búlgaro | `bg_BG-dimitar-medium` | 113 Hz | ♂ masculina (única) |
-| Rumano | `ro_RO-mihai-medium` | 130 Hz | ♂ masculina (única) |
+| Ruso | `ru_RU-irina-medium` | 176 Hz | ♀ femenina |
+| Hindi | `hi_IN-priyamvada-medium` | 192 Hz | ♀ femenina |
+| Bengalí | `bn_BD-google-medium` (speaker 12) | 264 Hz | ♀ femenina |
+| Catalán | `ca_ES-upc_ona-medium` | 179 Hz | ♀ femenina |
+| Checo | `cs_CZ-kasandra-medium` | 227 Hz | ♀ femenina |
+| Griego | `el_GR-joy-medium` | 196 Hz | ♀ femenina |
+| Indonesio | `id_ID-news_tts-medium` | 256 Hz | ♀ femenina |
+| Neerlandés | `nl_BE-nathalie-medium` | 175 Hz | ♀ femenina |
+| Noruego | `no_NO-nvcc-medium` (speaker 3) | 245 Hz | ♀ femenina |
+| Portugués | `pt_PT-tugão-medium` | 189 Hz | ♀ femenina |
+| Sueco | `sv_SE-alma-medium` | 184 Hz | ♀ femenina |
+| Tailandés | `th_TH-tsync2-medium` | 221 Hz | ♀ femenina |
+| Ucraniano | `uk_UA-tetiana-high` | 210 Hz | ♀ femenina |
+| Vietnamita | `vi_VN-25hours_single-low` | 225 Hz | ♀ femenina |
+| Danés | `da_DK-talesyntese-medium` | 115 Hz | ♂ masculina (única) |
+| Persa | `fa_IR-amir-medium` | 154 Hz | ♂ masculina (todas masculinas) |
+| Finés | `fi_FI-harri-medium` | 102 Hz | ♂ masculina (única) |
+| Hebreo | `he_IL-saspeech-medium` | 146 Hz | ♂ masculina (única) |
 
-Coreano, búlgaro y japonés no tienen paquete oficial de sherpa-onnx, así que se
-descarcan los ficheros crudos de rhasspy (`.onnx` + `.onnx.json`) y se convierten
-**en el dispositivo** (tokens.txt desde `phoneme_id_map` + metadata Piper dentro del `.onnx`).
+Todos los idiomas de la app tienen ya una voz Piper. Coreano, búlgaro, japonés,
+bengalí, checo, griego, hebreo, noruego, portugués, tailandés y ucraniano no tienen
+paquete oficial de sherpa-onnx, así que se descargan los ficheros crudos de rhasspy
+(`.onnx` + `.onnx.json`) y se convierten **en el dispositivo** (tokens.txt desde
+`phoneme_id_map` + metadata Piper dentro del `.onnx`).
 
 ### Requisitos
 
@@ -371,6 +403,6 @@ terceros conservan sus propias licencias (ver arriba).
 
 <div align="center">
 
-**Traductor v0.7.0** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
+**Traductor v0.9.0** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
 
 </div>

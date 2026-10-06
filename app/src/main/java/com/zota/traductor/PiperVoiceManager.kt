@@ -159,6 +159,29 @@ object PiperVoiceManager {
      *   bg_BG-dimitar-medium            113 Hz  masculina (única voz disponible)
      *   ro_RO-mihai-medium              130 Hz  masculina (única voz disponible)
      *
+     * Añadidas en v0.8:
+     *   ru_RU-irina-medium              176 Hz  femenina
+     *   hi_IN-priyamvada-medium         192 Hz  femenina
+     *
+     * Añadidas en v0.9 — 16 idiomas nuevos, una voz para CADA idioma de la app
+     * (medidas con el mismo método; la app pasa a cubrir los 32 idiomas destino):
+     *   bn_BD-google-medium             264 Hz  femenina (sid 12 de 16)
+     *   ca_ES-upc_ona-medium            179 Hz  femenina
+     *   cs_CZ-kasandra-medium           227 Hz  femenina
+     *   el_GR-joy-medium                196 Hz  femenina
+     *   id_ID-news_tts-medium           256 Hz  femenina
+     *   nl_BE-nathalie-medium           175 Hz  femenina
+     *   no_NO-nvcc-medium               245 Hz  femenina (sid 3 de 10)
+     *   pt_PT-tugão-medium              189 Hz  femenina
+     *   sv_SE-alma-medium               184 Hz  femenina
+     *   th_TH-tsync2-medium             221 Hz  femenina
+     *   uk_UA-tetiana-high              210 Hz  femenina
+     *   vi_VN-25hours_single-low        225 Hz  femenina
+     *   da_DK-talesyntese-medium        115 Hz  masculina (única disponible)
+     *   fa_IR-amir-medium               154 Hz  masculina (todas las opciones masculinas)
+     *   fi_FI-harri-medium              102 Hz  masculina (única disponible)
+     *   he_IL-saspeech-medium           146 Hz  masculina (única disponible)
+     *
      * La primera voz de cada idioma es la preferida por defecto.
      * `approxBytes` = tamaño real del `.tar.bz2` en sherpa-onnx (o del `.onnx` crudo
      * cuando el idioma no tiene paquete oficial).
@@ -195,7 +218,45 @@ object PiperVoiceManager {
         // ---- Rumano (solo hay voz masculina) ----
         spec("ro_RO-mihai-medium", "Rumano · mihai · masculina (medium) ♂", "ro", "ro/ro_RO/mihai/medium", "ro_RO-mihai-medium", 67_182_137L, gender = "M"),
         // ---- Japonés (femenina = speaker 0; SIN paquete sherpa -> crudo + convert) ----
-        rawSpec("ja_JP-hi_fi_captain-medium", "Japonés · hi_fi_captain · femenina (medium, speaker F) ♀", "ja", "ja/ja_JP/hi_fi_captain/medium", "ja_JP-hi_fi_captain-medium", 76_753_970L, speakerId = 0)
+        rawSpec("ja_JP-hi_fi_captain-medium", "Japonés · hi_fi_captain · femenina (medium, speaker F) ♀", "ja", "ja/ja_JP/hi_fi_captain/medium", "ja_JP-hi_fi_captain-medium", 76_753_970L, speakerId = 0),
+        // ---- Ruso (femenina) ----
+        spec("ru_RU-irina-medium", "Ruso · irina · femenina (medium) ♀", "ru", "ru/ru_RU/irina/medium", "ru_RU-irina-medium", 67_153_308L),
+        // ---- Hindi (femenina) ----
+        spec("hi_IN-priyamvada-medium", "Hindi · priyamvada · femenina (medium) ♀", "hi", "hi/hi_IN/priyamvada/medium", "hi_IN-priyamvada-medium", 67_240_610L),
+
+        // ================= v0.9 · un idioma más =================
+        // ---- Bengalí (femenina = speaker 12; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("bn_BD-google-medium", "Bengalí · google · femenina (medium, speaker F) ♀", "bn", "bn/bn_BD/google/medium", "bn_BD-google-medium", 76_782_515L, speakerId = 12),
+        // ---- Catalán (femenina) ----
+        spec("ca_ES-upc_ona-medium", "Catalán · upc_ona · femenina (medium) ♀", "ca", "ca/ca_ES/upc_ona/medium", "ca_ES-upc_ona-medium", 67_223_188L),
+        // ---- Checo (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("cs_CZ-kasandra-medium", "Checo · kasandra · femenina (medium) ♀", "cs", "cs/cs_CZ/kasandra/medium", "cs_CZ-kasandra-medium", 63_511_038L),
+        // ---- Danés (solo hay voz masculina) ----
+        spec("da_DK-talesyntese-medium", "Danés · talesyntese · masculina (medium) ♂", "da", "da/da_DK/talesyntese/medium", "da_DK-talesyntese-medium", 67_185_257L, gender = "M"),
+        // ---- Griego (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("el_GR-joy-medium", "Griego · joy · femenina (medium) ♀", "el", "el/el_GR/joy/medium", "el_GR-joy-medium", 63_516_050L),
+        // ---- Persa (todas las voces son masculinas) ----
+        spec("fa_IR-amir-medium", "Persa · amir · masculina (medium) ♂", "fa", "fa/fa_IR/amir/medium", "fa_IR-amir-medium", 67_180_373L, gender = "M"),
+        // ---- Finés (solo hay voz masculina) ----
+        spec("fi_FI-harri-medium", "Finés · harri · masculina (medium) ♂", "fi", "fi/fi_FI/harri/medium", "fi_FI-harri-medium", 67_205_198L, gender = "M"),
+        // ---- Hebreo (solo hay voz masculina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("he_IL-saspeech-medium", "Hebreo · saspeech · masculina (medium) ♂", "he", "he/he_IL/saspeech/medium", "he_IL-saspeech-medium", 63_221_984L, gender = "M"),
+        // ---- Indonesio (femenina) ----
+        spec("id_ID-news_tts-medium", "Indonesio · news_tts · femenina (medium) ♀", "id", "id/id_ID/news_tts/medium", "id_ID-news_tts-medium", 67_243_848L),
+        // ---- Neerlandés (femenina) ----
+        spec("nl_BE-nathalie-medium", "Neerlandés (BE) · nathalie · femenina (medium) ♀", "nl", "nl/nl_BE/nathalie/medium", "nl_BE-nathalie-medium", 67_226_472L),
+        // ---- Noruego (femenina = speaker 3; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("no_NO-nvcc-medium", "Noruego · nvcc · femenina (medium, speaker F) ♀", "no", "no/no_NO/nvcc/medium", "no_NO-nvcc-medium", 76_770_227L, speakerId = 3),
+        // ---- Portugués (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("pt_PT-tugão-medium", "Portugués (PT) · tugão · femenina (medium) ♀", "pt", "pt/pt_PT/tugão/medium", "pt_PT-tugão-medium", 63_201_294L),
+        // ---- Sueco (femenina) ----
+        spec("sv_SE-alma-medium", "Sueco · alma · femenina (medium) ♀", "sv", "sv/sv_SE/alma/medium", "sv_SE-alma-medium", 67_154_700L),
+        // ---- Tailandés (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("th_TH-tsync2-medium", "Tailandés · tsync2 · femenina (medium) ♀", "th", "th/th_TH/tsync2/medium", "th_TH-tsync2-medium", 63_221_984L),
+        // ---- Ucraniano (femenina; SIN paquete sherpa -> crudo + convert) ----
+        rawSpec("uk_UA-tetiana-high", "Ucraniano · tetiana · femenina (high) ♀", "uk", "uk/uk_UA/tetiana/high", "uk_UA-tetiana-high", 114_204_024L),
+        // ---- Vietnamita (femenina) ----
+        spec("vi_VN-25hours_single-low", "Vietnamita · 25hours_single · femenina (low) ♀", "vi", "vi/vi_VN/25hours_single/low", "vi_VN-25hours_single-low", 67_059_380L)
     )
 
     fun specFor(id: String): Spec? = CATALOG.firstOrNull { it.id == id }
