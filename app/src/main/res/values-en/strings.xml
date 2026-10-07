@@ -40,6 +40,7 @@
     <!-- States -->
     <string name="status_idle">Ready</string>
     <string name="status_translating">Translating…</string>
+    <string name="status_translate_cancelled">Translation cancelled</string>
     <string name="status_loading">Loading models…</string>
     <string name="status_copied">Copied to clipboard</string>
     <string name="status_pasted">Pasted</string>

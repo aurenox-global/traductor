@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -41,6 +42,26 @@ class TranslationPipeline(
     companion object {
         private const val TAG = "Pipeline"
         const val SAMPLE_RATE = 16000
+
+        /**
+         * Contexto del LLM (tokens). 4096 es holgado para la KV cache de un 0.8B Q4
+         * (unos pocos MB) y evita el recorte del prompt en textos largos. Configurable.
+         */
+        const val MT_N_CTX = 4096
+
+        /** Presupuesto de entrada por trozo, en caracteres (~350-400 tokens). */
+        const val MAX_CHARS_PER_CHUNK = TextChunker.DEFAULT_MAX_CHARS
+
+        /** Tope y suelo de tokens de salida por trozo. */
+        private const val MAX_OUTPUT_TOKENS = 768
+        private const val MIN_OUTPUT_TOKENS = 192
+
+        /**
+         * Presupuesto de salida para un trozo: ~mitad de caracteres, acotado.
+         * Reemplaza al `256` fijo que truncaba las traducciones largas.
+         */
+        fun maxTokensFor(chunk: String): Int =
+            min(MAX_OUTPUT_TOKENS, max(MIN_OUTPUT_TOKENS, chunk.length / 2))
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -58,6 +79,8 @@ class TranslationPipeline(
     private var llamaHandle: Long = 0L
     private var loadedAsrPath: String? = null
     private var loadedMtPath: String? = null
+
+    private val cancelRequested = java.util.concurrent.atomic.AtomicBoolean(false)
 
     private var sourceLang = Languages.DEFAULT_SOURCE
     private var targetLang = Languages.DEFAULT_TARGET
@@ -100,7 +123,7 @@ class TranslationPipeline(
 
         cb.onStatus("Cargando Qwen (${mt.name})…")
         if (llamaHandle == 0L) {
-            llamaHandle = LlamaBridge.nativeInit(mt.absolutePath, threadsForMt(), 2048)
+            llamaHandle = LlamaBridge.nativeInit(mt.absolutePath, threadsForMt(), MT_N_CTX)
             if (llamaHandle != 0L) loadedMtPath = mt.absolutePath
         }
         if (llamaHandle == 0L) { cb.onError("Qwen no pudo inicializar"); return false }
@@ -114,17 +137,65 @@ class TranslationPipeline(
 
     fun modelsLoaded(): Boolean = whisperHandle != 0L && llamaHandle != 0L
 
-    /** Traduce un texto ya escrito (sin ASR), con idiomas reales. */
+    /**
+     * Traduce un texto ya escrito (sin ASR), con idiomas reales.
+     *
+     * Si el texto es largo se parte en trozos (párrafos -> frases, sin cortar
+     * palabras) que quepan holgados en el contexto, se traduce cada trozo con un
+     * presupuesto de tokens proporcional a su tamaño y se recomponen unidos por
+     * "\n". Reporta progreso por [Callbacks.onStatus] y se puede cancelar con
+     * [cancelTranslation].
+     */
     suspend fun translateText(text: String, source: String, target: String): String {
         if (llamaHandle == 0L) return ""
         return inferMutex.withLock {
+            val input = text.trim()
+            if (input.isEmpty()) return@withLock ""
+
+            cancelRequested.set(false)
+            lastCancelled = false
+
             val system = Prompts.systemPrompt(target, source)
-            val out = withContext(Dispatchers.Default) {
-                LlamaBridge.nativeGenerate(llamaHandle, system, Prompts.userPrompt(text), 256, null)
+            val chunks = TextChunker.chunk(input, MAX_CHARS_PER_CHUNK)
+
+            // Caso normal y corto: un único trozo (comportamiento previo intacto).
+            if (chunks.size <= 1) {
+                val one = chunks.firstOrNull() ?: input
+                cb.onStatus("Traduciendo…")
+                val out = withContext(Dispatchers.Default) {
+                    LlamaBridge.nativeGenerate(
+                        llamaHandle, system, Prompts.userPrompt(one), maxTokensFor(one), null
+                    )
+                }
+                return@withLock Prompts.cleanOutput(out)
             }
-            Prompts.cleanOutput(out)
+
+            val parts = ArrayList<String>(chunks.size)
+            for ((i, chunk) in chunks.withIndex()) {
+                if (cancelRequested.get()) { lastCancelled = true; break }
+                cb.onStatus("Traduciendo trozo ${i + 1}/${chunks.size}…")
+                val out = withContext(Dispatchers.Default) {
+                    LlamaBridge.nativeGenerate(
+                        llamaHandle, system, Prompts.userPrompt(chunk), maxTokensFor(chunk), null
+                    )
+                }
+                parts.add(Prompts.cleanOutput(out))
+            }
+            parts.filter { it.isNotBlank() }.joinToString("\n")
         }
     }
+
+    /** Pide cancelar la traducción en curso (troceada o de un solo bloque). */
+    fun cancelTranslation() {
+        cancelRequested.set(true)
+        if (llamaHandle != 0L) {
+            try { LlamaBridge.nativeCancel(llamaHandle) } catch (_: Throwable) {}
+        }
+    }
+
+    /** true si la última [translateText] se abortó por cancelación. */
+    @Volatile var lastCancelled: Boolean = false
+        private set
 
     fun start(source: String, target: String, ttsEnabled: Boolean) {
         if (listening) return
@@ -230,7 +301,7 @@ class TranslationPipeline(
                     val acc = StringBuilder()
                     var lastEmit = 0L
                     val full = withContext(Dispatchers.Default) {
-                        LlamaBridge.nativeGenerate(llamaHandle, system, user, 256) { piece ->
+                        LlamaBridge.nativeGenerate(llamaHandle, system, user, maxTokensFor(original)) { piece ->
                             acc.append(piece)
                             val now = System.currentTimeMillis()
                             if (now - lastEmit > 140) {

@@ -12,6 +12,89 @@ Fecha: 2026-10-06 · Directorio: `/Users/zota/.openclaw/workspace/traductor/`
 
 ---
 
+# PARTE v0.9.2 — FIX: traducción de textos largos (chunking + contexto)
+
+**Estado: builds VERDES (LITE y FULL) y 62 tests host en verde.** El bug reportado en
+móvil real (ambas variantes) era que **los textos largos no se traducen** (salida vacía o
+truncada) mientras que los cortos sí.
+
+Fecha: 2026-10-07 · Directorio: `/Users/zota/Desktop/CODE/traductor/`
+**No se ha publicado nada** (ni push, ni releases).
+
+## 1. Causas localizadas
+1. `llama_jni.cpp:57`: `n_ctx` por defecto 2048 (contexto pequeño).
+2. `llama_jni.cpp:173-175`: al exceder el contexto se hacía
+   `tokens.erase(begin, begin + (size-(n_ctx-8)))` -> **conservaba la COLA y perdía el
+   SYSTEM** -> prompt roto -> salida vacía.
+3. `TranslationPipeline.kt:123/233`: `maxTokens` fijo a **256** -> traducción larga truncada.
+
+## 2. Cambios implementados (A-E)
+- **A) Chunking** — `TextChunker.kt` (nuevo, Kotlin puro): parte por
+  párrafos -> líneas -> frases -> palabras, **nunca a mitad de palabra**, presupuesto
+  configurable `MAX_CHARS_PER_CHUNK = 1200` (~350-400 tokens). `recompose()` une con `\n`.
+  La UI muestra progreso (`Traduciendo trozo i/n…`) y se puede **cancelar** (segundo toque
+  en Traducir).
+- **B) max_tokens dinámico** — `TranslationPipeline.maxTokensFor(chunk) =
+  min(768, max(192, chunk.length/2))` (antes 256 fijo). Se aplica también al flujo de voz.
+- **C) n_ctx** — `MT_N_CTX = 4096` (antes 2048), configurable y documentado. La KV cache de
+  un 0.8B Q4 a 4096 es de unos pocos MB.
+- **D) JNI** — el recorte fallback ahora **conserva el SYSTEM y recorta el USER** por el
+  final (re-tokeniza con el USER encogido), nunca se queda con la cola. Con el chunking no
+  debería activarse.
+- **E)** `cleanOutput`/anti-thinking intactos; OCR y voz sin cambios de contrato.
+
+## 3. Archivos
+| Archivo | Cambio |
+|---|---|
+| `app/src/main/java/com/zota/traductor/TextChunker.kt` | NUEVO: troceo + recompose |
+| `app/src/main/java/com/zota/traductor/TranslationPipeline.kt` | chunking, maxTokens dinámico, MT_N_CTX=4096, cancelar |
+| `app/src/main/java/com/zota/traductor/MainActivity.kt` | cancelar con 2º toque; estado "cancelada" |
+| `app/src/main/cpp/llama_jni.cpp` | prompt reutilizable; recorte conserva SYSTEM |
+| `app/src/test/java/com/zota/traductor/CoreTest.kt` | +7 tests (chunker + maxTokensFor) |
+| `app/src/main/res/values{,-en}/strings.xml` | `status_translate_cancelled` |
+| `scripts/validate_long_translation.py` | NUEVO: validación con modelo real |
+| `app/build.gradle.kts` | versionCode 11 / versionName 0.9.2 |
+
+## 4. Builds (verificado)
+| Dato | LITE | FULL |
+|---|---|---|
+| Comando | `./gradlew :app:assembleDebug` | `./gradlew :app:assembleDebug -Pbundled=true` |
+| Resultado | BUILD SUCCESSFUL | BUILD SUCCESSFUL |
+| APK | `dist/lite/traductor-lite-arm64-0.9.2-debug.apk` | `dist/full/traductor-full-arm64-0.9.2-debug.apk` |
+| Tamaño | **66 184 719 B** (≈63,1 MiB) | **946 800 244 B** (≈902,9 MiB) |
+| sha256 | `3ef115e60b074430f1a27d0ff94fcde4ea297c7fa0fce037fba1e2f92ec13e47` | `9682a04346dc53b50358006f66c104c408f884fa7050e672f44897c9fa253703` |
+| Tests host | `CoreTest 42 · OcrTest 20` = **62, failures=0** | **62, failures=0** |
+| versionCode/Name | 11 / 0.9.2 | 11 / 0.9.2 |
+
+Variante comprobada: LITE sin `assets/bundled/` (0 entradas), FULL con 723 entradas.
+
+## 5. Evidencia con el modelo real (EN->ES, texto largo)
+`scripts/validate_long_translation.py` (llama-server + Qwen3.5-0.8B-Q4_K_M, n_ctx=4096,
+prompt y muestreo greedy idénticos a `nativeGenerate`, bloque `<think>` cerrado vacío):
+- Texto EN de **2398 caracteres / 375 palabras / 4 párrafos** -> **3 trozos** [491, 715, 1188].
+- **VIEJO** (1 petición, max_tokens=256): `finish=limit`, salida truncada a media frase
+  (**1276 caracteres**).
+- **NUEVO** (troceo + max_tokens dinámico 245/357/594): los **3 trozos con `finish=eos`**,
+  traducción **completa de 2691 caracteres / 419 palabras**, los 4 párrafos y los cierres
+  intactos. `prompt_tokens` por trozo 177/219/308 (<< 4096).
+
+Tests del chunker (host): texto corto -> 1 trozo idéntico; texto largo -> varios trozos
+<= 1200 sin cortar palabras (secuencia de palabras idéntica); recomposición conserva los
+párrafos.
+
+## 6. No roto
+- Textos cortos: camino de 1 trozo intacto (mismo prompt, greedy, `cleanOutput`).
+- Voz (Whisper+VAD) y OCR: sin cambios de contrato; solo se sustituyó el 256 fijo por el
+  presupuesto dinámico en el MT del ASR.
+
+## 7. Pendiente / no verificado (honesto)
+- No se ha probado en el dispositivo físico (OnePlus PLB110); verificado en host + modelo real.
+- Un trozo de 1200 caracteres CJK (1 char ≈ 1 token) sigue cabiendo holgado en 4096, pero
+  salidas muy largas en idiomas densos podrían acercarse al tope de 768 tokens/trozo; el
+  tope es un único constante (`MAX_OUTPUT_TOKENS`) fácil de subir.
+
+---
+
 # PARTE v0.10 — Variante FULL: modelos y voces empaquetados en la APK
 
 **Estado: ambos builds VERDES.** Se añade una variante **FULL** sin tocar el build

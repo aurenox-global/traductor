@@ -100,37 +100,39 @@ Java_com_zota_traductor_LlamaBridge_nativeGenerate(
     std::lock_guard<std::mutex> lock(e->mtx);
     e->cancel.store(false);
 
-    // --- 1. chat template (Qwen) ---
-    std::string prompt;
-    {
-        llama_chat_message msgs[2];
-        msgs[0].role = "system";
-        msgs[0].content = system.c_str();
-        msgs[1].role = "user";
-        msgs[1].content = user.c_str();
+    // --- 1. chat template (Qwen) + sellado del bloque de razonamiento ---
+    // Se factoriza en una lambda para poder reconstruir el prompt con el USER
+    // recortado (fallback de contexto) sin perder el SYSTEM.
+    auto build_prompt = [&](const std::string & sys, const std::string & usr) -> std::string {
+        std::string p;
+        {
+            llama_chat_message msgs[2];
+            msgs[0].role = "system";
+            msgs[0].content = sys.c_str();
+            msgs[1].role = "user";
+            msgs[1].content = usr.c_str();
 
-        std::vector<char> buf(user.size() + system.size() + 1024);
-        int32_t n = llama_chat_apply_template(nullptr, msgs, 2, true, buf.data(), (int32_t) buf.size());
-        if (n > (int32_t) buf.size()) {
-            buf.resize(n + 1);
-            n = llama_chat_apply_template(nullptr, msgs, 2, true, buf.data(), (int32_t) buf.size());
+            std::vector<char> buf(usr.size() + sys.size() + 1024);
+            int32_t n = llama_chat_apply_template(nullptr, msgs, 2, true, buf.data(), (int32_t) buf.size());
+            if (n > (int32_t) buf.size()) {
+                buf.resize(n + 1);
+                n = llama_chat_apply_template(nullptr, msgs, 2, true, buf.data(), (int32_t) buf.size());
+            }
+            if (n > 0) {
+                p.assign(buf.data(), n);
+            } else {
+                // Fallback ChatML (Qwen)
+                p = "<|im_start|>system\n" + sys +
+                    "<|im_end|>\n<|im_start|>user\n" + usr +
+                    "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
+            }
         }
-        if (n > 0) {
-            prompt.assign(buf.data(), n);
-        } else {
-            // Fallback ChatML (Qwen)
-            prompt = "<|im_start|>system\n" + system +
-                     "<|im_end|>\n<|im_start|>user\n" + user +
-                     "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
-        }
-    }
 
-    // --- 1b. Desactivar el razonamiento de Qwen3.5 -------------------------
-    // El template deja el bloque de "thinking" ABIERTO ("<think>\n") cuando
-    // esta activado; entonces el modelo divaga y filtra ese texto
-    // ("* Wait, the user prompt says...") en la traduccion. Lo cerramos VACIO
-    // ("<think>\n\n</think>\n\n") para que responda directo con la traduccion.
-    {
+        // --- 1b. Desactivar el razonamiento de Qwen3.5 ---------------------
+        // El template deja el bloque de "thinking" ABIERTO ("<think>\n") cuando
+        // esta activado; entonces el modelo divaga y filtra ese texto
+        // ("* Wait, the user prompt says...") en la traduccion. Lo cerramos VACIO
+        // ("<think>\n\n</think>\n\n") para que responda directo con la traduccion.
         auto ends_with = [](const std::string &s, const std::string &suf) {
             return s.size() >= suf.size() &&
                    s.compare(s.size() - suf.size(), suf.size(), suf) == 0;
@@ -140,20 +142,35 @@ Java_com_zota_traductor_LlamaBridge_nativeGenerate(
         const std::string closed = "<think>\n\n</think>\n\n";
         const std::string assistant_hdr = "<|im_start|>assistant\n";
         const std::string assistant_hdr2 = "<|im_start|>assistant";
-        if (ends_with(prompt, open_nl)) {
+        if (ends_with(p, open_nl)) {
             // bloque abierto -> cerrarlo vacío
-            prompt.erase(prompt.size() - open_nl.size());
-            prompt += closed;
-        } else if (ends_with(prompt, open)) {
-            prompt.erase(prompt.size() - open.size());
-            prompt += closed;
-        } else if (ends_with(prompt, assistant_hdr)) {
+            p.erase(p.size() - open_nl.size());
+            p += closed;
+        } else if (ends_with(p, open)) {
+            p.erase(p.size() - open.size());
+            p += closed;
+        } else if (ends_with(p, assistant_hdr)) {
             // CHATML sin bloque think (caso Qwen3.5 en este llama.cpp): añadirlo CERRADO
-            prompt += closed;
-        } else if (ends_with(prompt, assistant_hdr2)) {
-            prompt += "\n" + closed;
+            p += closed;
+        } else if (ends_with(p, assistant_hdr2)) {
+            p += "\n" + closed;
         }
-    }
+        return p;
+    };
+
+    auto count_tokens = [&](const std::string & p) -> int {
+        std::vector<llama_token> t(p.size() + 16);
+        int32_t n = llama_tokenize(e->vocab, p.c_str(), (int32_t) p.size(),
+                                   t.data(), (int32_t) t.size(), true, true);
+        if (n < 0) {
+            t.resize(-n);
+            n = llama_tokenize(e->vocab, p.c_str(), (int32_t) p.size(),
+                               t.data(), (int32_t) t.size(), true, true);
+        }
+        return n;
+    };
+
+    std::string prompt = build_prompt(system, user);
 
     // --- 2. tokenizar ---
     std::vector<llama_token> tokens(prompt.size() + 16);
@@ -171,8 +188,39 @@ Java_com_zota_traductor_LlamaBridge_nativeGenerate(
     llama_memory_clear(llama_get_memory(e->ctx), true);
 
     const int n_ctx = (int) llama_n_ctx(e->ctx);
-    if ((int) tokens.size() > n_ctx - 8) {
-        tokens.erase(tokens.begin(), tokens.begin() + ((int) tokens.size() - (n_ctx - 8)));
+    const int budget = n_ctx - 8;
+    if ((int) tokens.size() > budget) {
+        // Fallback (el chunking en Kotlin ya lo evita): CONSERVAR el mensaje
+        // SYSTEM y recortar el USER por el final, nunca quedarse con la cola
+        // (eso borraba la instruccion de sistema y rompia el prompt).
+        const int sys_toks = count_tokens(build_prompt(system, ""));
+        const int user_budget = budget - sys_toks;
+        std::string u = user;
+        if (user_budget > 8) {
+            // Encoge el USER por caracteres hasta que el prompt quepa holgado.
+            while (!u.empty() && count_tokens(build_prompt(system, u)) > budget) {
+                size_t next = u.size() * 3 / 4;
+                if (next >= u.size()) next = u.size() - 1;
+                u.resize(next);
+            }
+        } else {
+            u.clear(); // el SYSTEM solo ya llena el contexto
+        }
+        prompt = build_prompt(system, u);
+        std::vector<llama_token> t2(prompt.size() + 16);
+        int32_t n2 = llama_tokenize(e->vocab, prompt.c_str(), (int32_t) prompt.size(),
+                                    t2.data(), (int32_t) t2.size(), true, true);
+        if (n2 < 0) {
+            t2.resize(-n2);
+            n2 = llama_tokenize(e->vocab, prompt.c_str(), (int32_t) prompt.size(),
+                                t2.data(), (int32_t) t2.size(), true, true);
+        }
+        if (n2 <= 0) { LOGE("tokenize fallo (recorte)"); return env->NewStringUTF(""); }
+        t2.resize(n2);
+        // Ultimo recurso: conservar el INICIO (SYSTEM), jamas la cola.
+        if ((int) t2.size() > budget) t2.resize(budget);
+        tokens.swap(t2);
+        LOGI("prompt recortado -> %d tokens (SYSTEM conservado, USER recortado)", (int) tokens.size());
     }
 
     for (size_t i = 0; i < tokens.size(); i += 512) {

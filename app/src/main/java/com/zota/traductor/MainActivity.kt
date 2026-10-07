@@ -120,7 +120,11 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
             historyLauncher.launch(Intent(this, HistoryActivity::class.java))
         }
 
-        b.btnTranslate.setOnClickListener { translateNowManual() }
+        b.btnTranslate.setOnClickListener {
+            // Si hay una traducción en curso, un segundo toque la cancela.
+            if (busy) { pipeline.cancelTranslation(); setStatus("Cancelando…") }
+            else translateNowManual()
+        }
         b.btnClearAll.setOnClickListener { clearAll() }
         b.btnClearInput.setOnClickListener { clearInput() }
 
@@ -242,16 +246,21 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
             val translated = withContext(Dispatchers.IO) {
                 pipeline.translateText(text, source.code, target.code)
             }
-            if (translated.isNotBlank()) {
-                showOutput(translated)
-                HistoryStore.add(
-                    this@MainActivity,
-                    HistEntry(text, translated, source.code, target.code, System.currentTimeMillis())
-                )
-                if (b.switchAutoTts.isChecked) tts.speak(translated, Languages.localeTag(target.code))
-                setStatus(getString(R.string.status_idle))
-            } else {
-                setStatus("Sin salida del modelo")
+            when {
+                pipeline.lastCancelled -> {
+                    if (translated.isNotBlank()) showOutput(translated)
+                    setStatus(getString(R.string.status_translate_cancelled))
+                }
+                translated.isNotBlank() -> {
+                    showOutput(translated)
+                    HistoryStore.add(
+                        this@MainActivity,
+                        HistEntry(text, translated, source.code, target.code, System.currentTimeMillis())
+                    )
+                    if (b.switchAutoTts.isChecked) tts.speak(translated, Languages.localeTag(target.code))
+                    setStatus(getString(R.string.status_idle))
+                }
+                else -> setStatus("Sin salida del modelo")
             }
             setBusyUi(false, b.txtStatus.text?.toString() ?: "")
             busy = false

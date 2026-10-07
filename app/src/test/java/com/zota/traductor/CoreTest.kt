@@ -534,6 +534,114 @@ class CoreTest {
         assertNull(BundledAssets.destRelative("otra/ruta.bin"))
     }
 
+    // ---------------- TextChunker (textos largos) ----------------
+
+    @Test
+    fun chunker_texto_corto_devuelve_un_trozo_identico() {
+        val corto = "Hola mundo, esto es una prueba corta."
+        val chunks = TextChunker.chunk(corto)
+        assertEquals(1, chunks.size)
+        assertEquals(corto, chunks[0])
+        // También por debajo del presupuesto explícito.
+        assertEquals(listOf(corto), TextChunker.chunk(corto, 100))
+    }
+
+    @Test
+    fun chunker_texto_vacio_no_produce_trozos() {
+        assertTrue(TextChunker.chunk("").isEmpty())
+    }
+
+    @Test
+    fun chunker_texto_largo_trocea_sin_cortar_palabras_y_respeta_presupuesto() {
+        val maxChars = 120
+        val oracion = "Esta es una oración de relleno que se repite para alargar el texto de prueba. "
+        val texto = oracion.repeat(12).trim()
+        assertTrue("el texto debe ser largo", texto.length > maxChars)
+
+        val chunks = TextChunker.chunk(texto, maxChars)
+        assertTrue("debe haber varios trozos", chunks.size > 1)
+        for (c in chunks) {
+            assertTrue("trozo <= $maxChars (era ${c.length})", c.length <= maxChars)
+        }
+        assertFalse("ningún trozo vacío", chunks.any { it.isBlank() })
+
+        // No se ha cortado ninguna palabra ni se ha perdido texto: la secuencia de
+        // palabras del original y de los trozos recomuestos coincide (normalizando
+        // los espacios/saltos).
+        val palabrasOriginal = texto.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val palabrasTrozos = TextChunker.recompose(chunks)
+            .split(Regex("\\s+"))
+            .filter { it.isNotEmpty() }
+        assertEquals(palabrasOriginal, palabrasTrozos)
+    }
+
+    @Test
+    fun chunker_una_sola_frase_larga_se_parte_por_palabras_sin_cortar() {
+        val maxChars = 60
+        // Sin signos de fin de frase -> solo puede partirse por palabras.
+        val texto = "uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince dieciseis"
+        val chunks = TextChunker.chunk(texto, maxChars)
+        assertTrue(chunks.size > 1)
+        for (c in chunks) assertTrue(c.length <= maxChars)
+        for (c in chunks) assertFalse("no debe partir una palabra", c.endsWith("-"))
+        assertEquals(
+            texto.split(" "),
+            TextChunker.recompose(chunks).split(Regex("\\s+"))
+        )
+    }
+
+    @Test
+    fun chunker_recomposicion_conserva_parrafos() {
+        val maxChars = 90
+        val p1 = "Primera oración del primer párrafo. Segunda oración del primer párrafo."
+        val p2 = "Primera oración del segundo párrafo. Segunda oración del segundo párrafo."
+        val texto = "$p1\n\n$p2"
+        assertTrue(texto.length > maxChars)
+
+        val chunks = TextChunker.chunk(texto, maxChars)
+        assertTrue(chunks.size > 1)
+        for (c in chunks) assertTrue(c.length <= maxChars)
+
+        val recom = TextChunker.recompose(chunks)
+        // Contenido íntegro (normalizando espacios).
+        assertEquals(
+            texto.replace(Regex("\\s+"), " ").trim(),
+            recom.replace(Regex("\\s+"), " ").trim()
+        )
+        // Ambas oraciones de ambos párrafos están y en orden.
+        val iPrim = recom.indexOf("Segunda oración del primer párrafo.")
+        val iSeg = recom.indexOf("Primera oración del segundo párrafo.")
+        assertTrue(iPrim in 0 until iSeg)
+        // El salto de párrafo se conserva como separación (no todo en una línea).
+        assertTrue("debe quedar un salto entre párrafos", recom.substring(iPrim, iSeg).contains("\n"))
+    }
+
+    @Test
+    fun chunker_encaja_texto_largo_en_el_presupuesto_del_contexto() {
+        // Un texto realista largo: debe caber en trozos holgados tipo ~350-400 tokens.
+        val texto = ("The quick brown fox jumps over the lazy dog. " +
+            "Pack my box with five dozen liquor jugs. ").repeat(20).trim()
+        val chunks = TextChunker.chunk(texto)
+        assertTrue(chunks.size > 1)
+        for (c in chunks) assertTrue(c.length <= TextChunker.DEFAULT_MAX_CHARS)
+        assertEquals(
+            texto.split(Regex("\\s+")),
+            TextChunker.recompose(chunks).split(Regex("\\s+"))
+        )
+    }
+
+    // ---------------- Presupuesto de tokens por trozo ----------------
+
+    @Test
+    fun maxTokensFor_es_dinamico_y_acotado() {
+        assertEquals(192, TranslationPipeline.maxTokensFor("")            ) // suelo
+        assertEquals(192, TranslationPipeline.maxTokensFor("x".repeat(100))) // 50 -> suelo
+        assertEquals(300, TranslationPipeline.maxTokensFor("x".repeat(600))) // 300
+        assertEquals(600, TranslationPipeline.maxTokensFor("x".repeat(1200))) // 600
+        // Tope 768 aunque el trozo sea enorme.
+        assertEquals(768, TranslationPipeline.maxTokensFor("x".repeat(9000)))
+    }
+
     @Test
     fun bundled_voices_son_las_por_defecto_del_catalogo() {
         // La APK FULL empaqueta la voz por defecto de ES y de EN del catálogo.
