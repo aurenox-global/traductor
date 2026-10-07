@@ -2,17 +2,19 @@
 
 <img src="assets/icon/ic_launcher_512.png" alt="Traductor" width="128" height="128" />
 
-# Traductor
+# Traductor · NLLB-200
 
 **A fully offline translator for Android — text, voice and photos.**
 **Un traductor 100% offline para Android — texto, voz y fotos.**
 
-[🇬🇧 English](#-english) · [🇪🇸 Español](#-español) · [🌐 Website / Web](docs/index.html)
+[🇬🇧 English](#-english) · [🇪🇸 Español](#-español) · [🌐 Website / Web](https://aurenox-global.github.io/traductor-web/)
 
 ![Platform](https://img.shields.io/badge/platform-Android%208%2B%20(arm64--v8a)-0A84FF)
 ![Offline](https://img.shields.io/badge/offline-100%25-0A84FF)
-![Kotlin](https://img.shields.io/badge/Kotlin-JNI%20%2B%20C%2B%2B-0A84FF)
+![Engine](https://img.shields.io/badge/engine-NLLB--200%20%C2%B7%20ONNX-0A84FF)
 ![License](https://img.shields.io/badge/license-MIT-0A84FF)
+
+**Latest release: [`v1.0-nllb`](https://github.com/aurenox-global/traductor/releases/latest)** · LITE ≈ 79 MB · FULL ≈ 1.32 GB
 
 </div>
 
@@ -26,28 +28,60 @@
 photos **entirely on the device**. There is no cloud, no account and no telemetry:
 once the models are downloaded, the app works in airplane mode.
 
-- **Translation:** local LLM (Qwen3.5-0.8B GGUF) running on **llama.cpp** via JNI.
+- **Translation:** **NLLB-200-distilled-600M** (Meta AI) quantised to int8 ONNX and
+  run with **ONNX Runtime** — a dedicated, 200-language neural translation model.
+  No LLM, no chat prompt: a real encoder/decoder translator.
 - **Speech recognition:** **Whisper** (`whisper.cpp`) — record and transcribe offline.
 - **Voice activity detection:** **Silero VAD** (ONNX Runtime) to cut clean audio segments.
 - **Photo OCR:** **PaddleOCR PP-OCR** (ONNX) — point the camera at a sign and translate it.
 - **Text-to-speech:** **Piper** neural voices (sherpa-onnx + espeak-ng), fully offline.
-- **UI:** a clean, Google-Translate-style dark interface.
+- **UI:** a clean, Google-Translate-style interface with a light/dark theme.
 
 > The only moment a connection is needed is the **first model download** (Wi-Fi
-> recommended). After that everything runs locally.
+> recommended). After that everything runs locally. You can also **import the models
+> from the phone's storage**, so nothing is ever downloaded.
 
 ### Features
 
 | | |
 |---|---|
-| 🌍 **30+ languages** | Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian, Romanian, Bulgarian, Hungarian… |
-| ⌨️ **Text translation** | Type or paste, with an ES/EN translated interface and language selector. |
+| 🌍 **NLLB-200 languages** | The NLLB-200 model family covers 200 languages; the app maps the main ones (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA…). |
+| ⌨️ **Text translation** | Type or paste, with an ES/EN translated interface and language selector. Long texts are translated sentence by sentence. |
 | 🎤 **Voice translation** | Whisper ASR + VAD: press the mic, speak naturally, get text. |
 | 📷 **Photo translation (OCR)** | Camera or gallery → offline text extraction → editable input → translation. |
-| 🔊 **Offline TTS** | Piper neural voices for all 32 languages (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA): **female by preference**, male only when it is a language's only voice or all its voices are male (AR, TR, BG, RO, DA, FA, FI, HE). System engine as fallback. |
+| 🔊 **Offline TTS** | Piper neural voices, **female by preference** (verified by measuring F0); male only when it is a language's only option. System engine as fallback. |
+| 📥 **Import NLLB models** | Download the ONNX models, or **import them from a folder on the phone** (encoder + decoder + `tokenizer.bin`) — nothing but the APK is transferred. |
 | 🕘 **History** | Your translations are stored locally and can be revisited. |
-| ⚙️ **Model manager** | Download or import GGUF/Whisper/Piper models from storage. |
+| ⚙️ **Model manager** | Download or import Whisper/Piper/OCR models from storage. |
 | 🔒 **Private by design** | Nothing leaves the phone. No ads, no analytics, no servers. |
+
+### Translation engine (NLLB-200 · ONNX)
+
+The translation engine is **NLLB-200-distilled-600M**, quantised to int8 and exported
+to ONNX (`Xenova/nllb-200-distilled-600M`):
+
+| File | Role | Size |
+|---|---|---|
+| `nllb_encoder_model_quantized.onnx` | Encoder | ≈ 419 MB |
+| `nllb_decoder_model_merged_quantized.onnx` | Decoder (merged, cache) | ≈ 475 MB |
+| `tokenizer.bin` | SentencePiece BPE tokenizer (compact) | ≈ 9 MB |
+
+- The **tokenizer** ships inside the APK (`assets/nllb/tokenizer.bin`).
+- The two **ONNX** models (~900 MB) are either **downloaded on first run** or
+  **imported from storage** (see below). They are never bundled in the normal APK.
+- The tokenizer is reimplemented in **pure Kotlin** (SentencePiece BPE with Metaspace
+  pre-tokenization + BPE merges), verified against HuggingFace in unit tests.
+
+### Import the models from your phone (no download)
+
+1. Download the three files (encoder ONNX, decoder ONNX, `tokenizer.bin`) into the
+   **same folder** on the phone.
+2. Open the app → **Settings** → *Translation model (NLLB-200 · ONNX)* →
+   **Import NLLB models** → pick that folder.
+3. The app copies the files to its private storage and **won't download anything**.
+
+On the **FULL** build the models are already inside the APK, so import is optional;
+on the **LITE** build you either import them or let the app download them on first run.
 
 ### How it works (architecture)
 
@@ -60,113 +94,80 @@ once the models are downloaded, the app works in airplane mode.
                  └───────┬───────────────────────┬──────────────┘
                          │                       │
                  ┌───────▼────────┐      ┌───────▼────────┐
-                 │  llama.cpp     │      │  whisper.cpp   │
-                 │ (Qwen3.5 GGUF) │      │  (Whisper)     │
-                 │  llama_jni     │      │  whisper_jni   │
+                 │ ONNX Runtime   │      │  whisper.cpp   │
+                 │  NLLB-200      │      │  (Whisper ASR) │
+                 │  encoder+dec   │      │  whisper_jni   │
                  └────────────────┘      └────────────────┘
-                         │                       │
+                         │
                  ONNX Runtime (Silero VAD · PaddleOCR PP-OCR)
                          │
                  sherpa-onnx (Piper TTS + espeak-ng)
 ```
 
-- **JNI layer** (`app/src/main/cpp`): thin C++ bridges `llama_jni.cpp` and
-  `whisper_jni.cpp`, linked against static builds of `llama.cpp` and `whisper.cpp`
-  produced by `scripts/build_native.sh` (Android NDK, `arm64-v8a`, 16 KB-aligned).
-- **Kotlin layer** (`app/src/main/java/com/zota/traductor`): `TranslationPipeline`
-  orchestrates ASR → prompt → LLM → post-processing → TTS; `ModelManager` handles
-  downloads/import; `Prompts` builds the Qwen chat prompt; `HistoryStore` persists.
-- **Models downloaded at runtime** (never bundled in the normal APK) to the app's
+- **JNI layer** (`app/src/main/cpp`): a single thin C++ bridge, `whisper_jni.cpp`,
+  linked against a static build of `whisper.cpp` produced by
+  `scripts/build_native.sh` (Android NDK, `arm64-v8a`, 16 KB-aligned).
+- **Kotlin layer** (`app/src/main/java/com/zota/traductor`): `NllbEngine`
+  (encoder + merged decoder via ONNX Runtime, sentence-level chunking) and
+  `NllbTokenizer` drive translation; `TranslationPipeline` orchestrates
+  ASR → NLLB → post-processing → TTS; `NllbModels`/`NllbImport` handle
+  download/import; `HistoryStore` persists.
+- **Models are downloaded at runtime** (never bundled in the normal APK) to the app's
   private storage, sizes shown in Settings. There is also a **FULL** build variant
-  that ships the default models and voices *inside* the APK (no download on first
-  launch) - see [How to build](#how-to-build).
+  that ships the models and voices *inside* the APK (no download on first launch) —
+  see [How to build](#how-to-build).
 
-### Offline voices (Piper)
+### Build variants (LITE / FULL)
 
-Neural voices are downloaded at runtime (never bundled, except in the **FULL**
-build variant, which ships the default ES/EN voices). The catalog **prefers
-female voices** (verified by measuring the fundamental frequency, F0, of the
-synthesized audio: female ≈ 165–250 Hz). A **male** voice is only included when it
-is the *only* voice available for that language, and it is labelled as such (♂).
+The variants are **not** product flavors: they are gated by Gradle properties, so the
+normal build is untouched.
 
-| Language | Voice | F0 | Gender |
+| Variant | Command | Contents | versionName |
 |---|---|---|---|
-| Polish | `pl_PL-gosia-medium` | 206 Hz | ♀ female |
-| Korean | `ko_KR-kss-medium` | 306 Hz | ♀ female |
-| Hungarian | `hu_HU-anna-medium` | 184 Hz | ♀ female |
-| Japanese | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ female |
-| Russian | `ru_RU-irina-medium` | 176 Hz | ♀ female |
-| Hindi | `hi_IN-priyamvada-medium` | 192 Hz | ♀ female |
-| Bengali | `bn_BD-google-medium` (speaker 12) | 264 Hz | ♀ female |
-| Catalan | `ca_ES-upc_ona-medium` | 179 Hz | ♀ female |
-| Czech | `cs_CZ-kasandra-medium` | 227 Hz | ♀ female |
-| Greek | `el_GR-joy-medium` | 196 Hz | ♀ female |
-| Indonesian | `id_ID-news_tts-medium` | 256 Hz | ♀ female |
-| Dutch | `nl_BE-nathalie-medium` | 175 Hz | ♀ female |
-| Norwegian | `no_NO-nvcc-medium` (speaker 3) | 245 Hz | ♀ female |
-| Portuguese | `pt_PT-tugão-medium` | 189 Hz | ♀ female |
-| Swedish | `sv_SE-alma-medium` | 184 Hz | ♀ female |
-| Thai | `th_TH-tsync2-medium` | 221 Hz | ♀ female |
-| Ukrainian | `uk_UA-tetiana-high` | 210 Hz | ♀ female |
-| Vietnamese | `vi_VN-25hours_single-low` | 225 Hz | ♀ female |
-| Danish | `da_DK-talesyntese-medium` | 115 Hz | ♂ male (only option) |
-| Persian | `fa_IR-amir-medium` | 154 Hz | ♂ male (all options male) |
-| Finnish | `fi_FI-harri-medium` | 102 Hz | ♂ male (only option) |
-| Hebrew | `he_IL-saspeech-medium` | 146 Hz | ♂ male (only option) |
-
-Every language of the app now has a Piper voice. Korean, Bulgarian, Japanese,
-Bengali, Czech, Greek, Hebrew, Norwegian, Portuguese, Thai and Ukrainian have no
-official sherpa-onnx package, so the raw rhasspy files (`.onnx` + `.onnx.json`) are
-downloaded and converted **on the device** (tokens.txt from `phoneme_id_map` +
-Piper metadata embedded in the `.onnx`).
+| **LITE** (normal) | `./gradlew :app:assembleDebug` | Downloads models on first run | `1.0.2-nllb` |
+| **LITE-OCR** | `./gradlew :app:assembleDebug -Pocrbundle=true` | Ships the OCR + VAD models in assets | `1.0-nllb-lite` |
+| **FULL** | `./gradlew :app:assembleDebug -Pbundled=true` | Ships **all** models (NLLB + Whisper + OCR + VAD + Piper) in assets | `1.0-nllb-full` |
 
 ### Requirements
 
 - Android **8.0 (API 26)** or newer.
 - **arm64-v8a** device (most modern phones). The APK ships a single ABI.
-- **~700 MB free** for the first model download (translation + speech + VAD).
+- **~1.1 GB free** for the first model download (NLLB ≈ 900 MB + Whisper + VAD).
 - For building: **JDK 17**, **Android SDK 35**, **NDK 27.0.12077973**, **CMake 3.22.1**.
 
 ### How to build
 
 ```bash
-# 1. Native libraries (llama.cpp + whisper.cpp → static .a for arm64-v8a)
-./scripts/fetch-deps.sh          # clone the pinned llama.cpp / whisper.cpp (submodules)
-./scripts/build_native.sh        # compile them with the NDK
+# 1. Native library (whisper.cpp → static .a for arm64-v8a)
+./scripts/fetch-deps.sh              # clone the pinned whisper.cpp (submodule)
+LIBS=whisper ./scripts/build_native.sh   # compile it with the NDK
 
 # 2. The app
-./gradlew :app:assembleDebug     # → app/build/outputs/apk/debug/app-debug.apk
-./gradlew :app:testDebugUnitTest # host unit tests
+./gradlew :app:assembleDebug         # → app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:testDebugUnitTest     # host unit tests
 
 # 3. Install
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-#### FULL variant (all default models bundled)
+> `scripts/build_native.sh` still knows how to build `llama.cpp` (`LIBS="llama whisper"`),
+> but the NLLB variant no longer links it: only `whisperjni` is compiled by
+> `app/src/main/cpp/CMakeLists.txt`.
 
-Optionally build a **FULL** APK that carries the default models and voices *inside*
-the APK (nothing is downloaded on first launch). Same sources, gated by the
-`bundled` Gradle property — **no product flavors**, so the normal (LITE) build is
-untouched:
+#### FULL variant (all default models bundled)
 
 ```bash
 ./scripts/fetch_bundled_assets.sh              # download the models into app/bundled-assets/
-./gradlew :app:assembleDebug -Pbundled=true    # → app/build/outputs/apk/full/traductor-full-arm64-debug.apk
+./gradlew :app:assembleDebug -Pbundled=true    # → dist-final/traductor-nllb-full-arm64-debug.apk
 ```
 
-The FULL APK bundles Qwen3.5-0.8B-Q4_K_M, Whisper base, Silero VAD, the PP-OCRv6
-tiny OCR models and the default Piper voices (ES `es_AR-daniela-high`, EN
-`en_US-hfc_female-medium`) with their `tokens.txt` and `espeak-ng-data`. On first
-launch they are **copied from assets to private storage** (with progress) instead
-of downloaded; any other model or voice is still downloaded normally. The
-`app/bundled-assets/` folder is generated by the script and not versioned
-(see `.gitignore`).
-
-If the submodules are not initialised, `fetch-deps.sh` clones them at the pinned
-commits:
-
-- `llama.cpp` → `4f5406761517648c23dbd60ea5ade37f77a316c9`
-- `whisper.cpp` → `4afec37b797ab531aaf363208d79d541fbc17ff4`
+The FULL APK bundles NLLB-200 (encoder + decoder + tokenizer), Whisper base, Silero
+VAD, the PP-OCRv6 tiny OCR models and the default Piper voices (ES
+`es_AR-daniela-high`, EN `en_US-hfc_female-medium`) with their `tokens.txt` and
+`espeak-ng-data`. On first launch they are **copied from assets to private storage**
+(with progress) instead of downloaded; any other model or voice is still downloaded
+normally. The `app/bundled-assets/` folder is generated by the script and not
+versioned (see `.gitignore`).
 
 ### Repository structure
 
@@ -176,17 +177,21 @@ traductor/
 │   ├── build.gradle.kts
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/zota/traductor/   # Kotlin: pipeline, ASR, TTS, OCR, UI
-│       │   ├── cpp/                       # JNI bridges + llama.cpp/whisper.cpp (submodules)
+│       │   ├── java/com/zota/traductor/   # Kotlin: NllbEngine/Tokenizer, ASR, TTS, OCR, UI
+│       │   ├── cpp/                       # whisper_jni.cpp + whisper.cpp (submodule)
+│       │   ├── assets/nllb/tokenizer.bin  # NLLB tokenizer (ships in the APK)
 │       │   ├── res/                       # layouts, strings (es/en), mipmaps, adaptive icon
 │       │   └── AndroidManifest.xml
 │       └── test/                          # host unit tests (JUnit)
 ├── assets/icon/                           # icon sources + generate_icons.py
-├── docs/                                  # bilingual website (GitHub Pages)
+├── jvmharness/                            # JVM harness: runs NllbEngine on the desktop
 ├── scripts/
 │   ├── fetch-deps.sh                      # clone vendor deps at pinned commits
 │   ├── build_native.sh                    # NDK build of the native libraries
 │   ├── fetch_bundled_assets.sh            # FULL variant: download models to bundle
+│   ├── fetch_ocr_bundle.sh                # LITE-OCR variant: download OCR to bundle
+│   ├── build_nllb_tokenizer.py            # tokenizer.json → assets/nllb/tokenizer.bin
+│   ├── nllb_onnx.py                       # reference Python NLLB pipeline (validation)
 │   └── bundled_manifest.py                # FULL variant: generate the assets manifest
 ├── gradle/ · gradlew · settings.gradle.kts
 └── README.md
@@ -206,26 +211,25 @@ traductor/
 
 | Component | License | Use |
 |---|---|---|
-| [llama.cpp](https://github.com/ggml-org/llama.cpp) | MIT | Local LLM inference |
+| [NLLB-200](https://huggingface.co/facebook/nllb-200-distilled-600M) | CC-BY-NC-4.0 | Translation model (encoder/decoder) |
+| [ONNX Runtime](https://github.com/microsoft/onnxruntime) | MIT | NLLB + VAD + OCR inference |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) | MIT | Speech recognition |
 | [Whisper](https://github.com/openai/whisper) | MIT | ASR model |
+| [Silero VAD](https://github.com/snakers4/silero-vad) | MIT | Voice activity detection |
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 | Piper TTS runtime |
 | [Piper](https://github.com/rhasspy/piper) | MIT | Neural TTS voices |
 | [espeak-ng](https://github.com/espeak-ng/espeak-ng) | GPL-3.0 | Piper phonemization |
 | [PaddleOCR (PP-OCR)](https://github.com/PaddlePaddle/PaddleOCR) | Apache-2.0 | Photo OCR |
-| [ONNX Runtime](https://github.com/microsoft/onnxruntime) | MIT | VAD + OCR inference |
-| [Silero VAD](https://github.com/snakers4/silero-vad) | MIT | Voice activity detection |
-| [Qwen3.5-0.8B GGUF](https://huggingface.co/lmstudio-community/Qwen3.5-0.8B-GGUF) | Apache-2.0 | Translation model |
 
 Model files are downloaded from their official repositories and remain subject to
-their own licenses.
+their own licenses — note that the **NLLB-200 weights are licensed CC-BY-NC-4.0
+(non-commercial)**.
 
 ### Credits
 
 **Created by [Andres Mag](https://github.com/) · Cuba.** 🇨🇺
 
-Built on the shoulders of the open-source community above. See
-[`docs/index.html`](docs/index.html) for the full story.
+Built on the shoulders of the open-source community above.
 
 ### License
 
@@ -242,28 +246,61 @@ keep their own licenses (see above).
 **íntegramente en el dispositivo**. Sin nube, sin cuentas y sin telemetría: una vez
 descargados los modelos, funciona incluso en modo avión.
 
-- **Traducción:** LLM local (Qwen3.5-0.8B GGUF) sobre **llama.cpp** vía JNI.
+- **Traducción:** **NLLB-200-distilled-600M** (Meta AI) cuantizado a int8 en ONNX y
+  ejecutado con **ONNX Runtime** — un modelo de traducción neuronal dedicado de 200
+  idiomas. Sin LLM y sin prompt de chat: un traductor real encoder/decoder.
 - **Reconocimiento de voz:** **Whisper** (`whisper.cpp`) — graba y transcribe offline.
 - **Detección de voz:** **Silero VAD** (ONNX Runtime) para cortar segmentos limpios.
 - **OCR de fotos:** **PaddleOCR PP-OCR** (ONNX) — apunta a un cartel y tradúcelo.
 - **Texto a voz:** voces neuronales **Piper** (sherpa-onnx + espeak-ng), 100% offline.
-- **Interfaz:** limpia, estilo Google Translate, tema oscuro.
+- **Interfaz:** limpia, estilo Google Translate, con tema claro/oscuro.
 
 > El único momento en que hace falta conexión es la **primera descarga de modelos**
-> (se recomienda Wi-Fi). Después, todo se ejecuta en local.
+> (se recomienda Wi-Fi). Después, todo se ejecuta en local. También puedes **importar
+> los modelos desde el almacenamiento del móvil**, sin descargar nada.
 
 ### Características
 
 | | |
 |---|---|
-| 🌍 **30+ idiomas** | Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano, rumano, búlgaro, húngaro… |
-| ⌨️ **Traducción de texto** | Escribe o pega, con interfaz traducida ES/EN y selector de idiomas. |
+| 🌍 **Idiomas NLLB-200** | La familia NLLB-200 cubre 200 idiomas; la app mapea los principales (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA…). |
+| ⌨️ **Traducción de texto** | Escribe o pega, con interfaz traducida ES/EN y selector de idiomas. Los textos largos se traducen frase a frase. |
 | 🎤 **Traducción de voz** | ASR Whisper + VAD: pulsa el micro, habla con naturalidad y obtén el texto. |
 | 📷 **Traducción de fotos (OCR)** | Cámara o galería → extracción de texto offline → entrada editable → traducción. |
-| 🔊 **TTS offline** | Voces neuronales Piper para los 32 idiomas (ES, EN, FR, DE, IT, PT, RU, ZH, JA, KO, AR, HI, TR, NL, PL, UK, RO, BG, HU, SV, DA, FI, NO, CS, EL, HE, FA, ID, VI, TH, BN, CA): **femeninas por preferencia**, masculinas solo cuando son la única voz del idioma o todas sus voces son masculinas (AR, TR, BG, RO, DA, FA, FI, HE). Motor del sistema como reserva. |
+| 🔊 **TTS offline** | Voces neuronales Piper, **femeninas por preferencia** (verificadas midiendo F0); masculinas solo cuando son la única opción del idioma. Motor del sistema como reserva. |
+| 📥 **Importar modelos NLLB** | Descarga los ONNX, o **impórtalos desde una carpeta del móvil** (encoder + decoder + `tokenizer.bin`): no se transfiere nada más que la APK. |
 | 🕘 **Historial** | Tus traducciones se guardan en local y puedes consultarlas. |
-| ⚙️ **Gestor de modelos** | Descarga o importa modelos GGUF/Whisper/Piper desde el almacenamiento. |
+| ⚙️ **Gestor de modelos** | Descarga o importa modelos Whisper/Piper/OCR desde el almacenamiento. |
 | 🔒 **Privacidad por diseño** | Nada sale del teléfono. Sin anuncios, sin analíticas, sin servidores. |
+
+### Motor de traducción (NLLB-200 · ONNX)
+
+El motor de traducción es **NLLB-200-distilled-600M**, cuantizado a int8 y exportado a
+ONNX (`Xenova/nllb-200-distilled-600M`):
+
+| Fichero | Rol | Tamaño |
+|---|---|---|
+| `nllb_encoder_model_quantized.onnx` | Encoder | ≈ 419 MB |
+| `nllb_decoder_model_merged_quantized.onnx` | Decoder (merged, caché) | ≈ 475 MB |
+| `tokenizer.bin` | Tokenizador SentencePiece BPE (compacto) | ≈ 9 MB |
+
+- El **tokenizador** viaja dentro de la APK (`assets/nllb/tokenizer.bin`).
+- Los dos **ONNX** (~900 MB) se **descargan en el primer uso** o se **importan desde el
+  almacenamiento** (ver abajo). Nunca van dentro de la APK normal.
+- El tokenizador está reimplementado en **Kotlin puro** (SentencePiece BPE con
+  pre-tokenización Metaspace + fusiones BPE), verificado contra HuggingFace en los tests.
+
+### Importar los modelos desde el móvil (sin descargar)
+
+1. Descarga los tres ficheros (encoder ONNX, decoder ONNX y `tokenizer.bin`) a una
+   **misma carpeta** del móvil.
+2. Abre la app → **Ajustes** → *Modelo de traducción (NLLB-200 · ONNX)* →
+   **Importar modelos NLLB** → elige esa carpeta.
+3. La app los copia a su memoria interna y **ya no descarga nada**.
+
+En la variante **FULL** los modelos ya vienen dentro de la APK, así que la importación
+es opcional; en la variante **LITE** hay que importarlos o dejarlos descargar en el
+primer arranque.
 
 ### Cómo funciona (arquitectura)
 
@@ -276,113 +313,79 @@ descargados los modelos, funciona incluso en modo avión.
                  └───────┬───────────────────────┬──────────────┘
                          │                       │
                  ┌───────▼────────┐      ┌───────▼────────┐
-                 │  llama.cpp     │      │  whisper.cpp   │
-                 │ (Qwen3.5 GGUF) │      │  (Whisper)     │
-                 │  llama_jni     │      │  whisper_jni   │
+                 │ ONNX Runtime   │      │  whisper.cpp   │
+                 │  NLLB-200      │      │  (Whisper ASR) │
+                 │  encoder+dec   │      │  whisper_jni   │
                  └────────────────┘      └────────────────┘
-                         │                       │
+                         │
                  ONNX Runtime (Silero VAD · PaddleOCR PP-OCR)
                          │
                  sherpa-onnx (Piper TTS + espeak-ng)
 ```
 
-- **Capa JNI** (`app/src/main/cpp`): puentes C++ finos `llama_jni.cpp` y
-  `whisper_jni.cpp`, enlazados contra builds estáticos de `llama.cpp` y
-  `whisper.cpp` generados por `scripts/build_native.sh` (NDK de Android,
-  `arm64-v8a`, alineado a 16 KB).
-- **Capa Kotlin** (`app/src/main/java/com/zota/traductor`): `TranslationPipeline`
-  orquesta ASR → prompt → LLM → post-proceso → TTS; `ModelManager` gestiona
-  descargas/importaciones; `Prompts` construye el chat de Qwen; `HistoryStore` persiste.
-- **Modelos descargados en tiempo de ejecución** (nunca incluidos en el APK normal)
+- **Capa JNI** (`app/src/main/cpp`): un único puente C++ fino, `whisper_jni.cpp`,
+  enlazado contra un build estático de `whisper.cpp` generado por
+  `scripts/build_native.sh` (NDK de Android, `arm64-v8a`, alineado a 16 KB).
+- **Capa Kotlin** (`app/src/main/java/com/zota/traductor`): `NllbEngine`
+  (encoder + decoder merged por ONNX Runtime, troceado por frases) y `NllbTokenizer`
+  realizan la traducción; `TranslationPipeline` orquesta ASR → NLLB → post-proceso →
+  TTS; `NllbModels`/`NllbImport` gestionan descarga/importación; `HistoryStore` persiste.
+- **Modelos descargados en tiempo de ejecución** (nunca incluidos en la APK normal)
   al almacenamiento privado de la app, con tamaños visibles en Ajustes. Existe además
-  una variante **FULL** que lleva los modelos y voces por defecto *dentro* del APK
-  (sin descarga en el primer arranque) - ver [Cómo compilar](#cómo-compilar).
+  una variante **FULL** que lleva los modelos y voces *dentro* del APK (sin descarga
+  en el primer arranque) — ver [Cómo compilar](#cómo-compilar).
 
-### Voces offline (Piper)
+### Variantes de build (LITE / FULL)
 
-Las voces neuronales se descargan en tiempo de ejecución (nunca van en el APK,
-salvo en la variante **FULL**, que incluye las voces ES/EN por defecto). El
-catálogo **prefiere voces femeninas** (verificado midiendo la frecuencia fundamental,
-F0, del audio sintetizado: femenina ≈ 165–250 Hz). Solo se incluye una voz
-**masculina** cuando es la *única* disponible para ese idioma, y va marcada como tal (♂).
+Las variantes **no** son product flavors: se gobiernan por propiedades Gradle, así que
+el build normal queda intacto.
 
-| Idioma | Voz | F0 | Género |
+| Variante | Comando | Contenido | versionName |
 |---|---|---|---|
-| Polaco | `pl_PL-gosia-medium` | 206 Hz | ♀ femenina |
-| Coreano | `ko_KR-kss-medium` | 306 Hz | ♀ femenina |
-| Húngaro | `hu_HU-anna-medium` | 184 Hz | ♀ femenina |
-| Japonés | `ja_JP-hi_fi_captain-medium` (speaker 0) | 269 Hz | ♀ femenina |
-| Ruso | `ru_RU-irina-medium` | 176 Hz | ♀ femenina |
-| Hindi | `hi_IN-priyamvada-medium` | 192 Hz | ♀ femenina |
-| Bengalí | `bn_BD-google-medium` (speaker 12) | 264 Hz | ♀ femenina |
-| Catalán | `ca_ES-upc_ona-medium` | 179 Hz | ♀ femenina |
-| Checo | `cs_CZ-kasandra-medium` | 227 Hz | ♀ femenina |
-| Griego | `el_GR-joy-medium` | 196 Hz | ♀ femenina |
-| Indonesio | `id_ID-news_tts-medium` | 256 Hz | ♀ femenina |
-| Neerlandés | `nl_BE-nathalie-medium` | 175 Hz | ♀ femenina |
-| Noruego | `no_NO-nvcc-medium` (speaker 3) | 245 Hz | ♀ femenina |
-| Portugués | `pt_PT-tugão-medium` | 189 Hz | ♀ femenina |
-| Sueco | `sv_SE-alma-medium` | 184 Hz | ♀ femenina |
-| Tailandés | `th_TH-tsync2-medium` | 221 Hz | ♀ femenina |
-| Ucraniano | `uk_UA-tetiana-high` | 210 Hz | ♀ femenina |
-| Vietnamita | `vi_VN-25hours_single-low` | 225 Hz | ♀ femenina |
-| Danés | `da_DK-talesyntese-medium` | 115 Hz | ♂ masculina (única) |
-| Persa | `fa_IR-amir-medium` | 154 Hz | ♂ masculina (todas masculinas) |
-| Finés | `fi_FI-harri-medium` | 102 Hz | ♂ masculina (única) |
-| Hebreo | `he_IL-saspeech-medium` | 146 Hz | ♂ masculina (única) |
-
-Todos los idiomas de la app tienen ya una voz Piper. Coreano, búlgaro, japonés,
-bengalí, checo, griego, hebreo, noruego, portugués, tailandés y ucraniano no tienen
-paquete oficial de sherpa-onnx, así que se descargan los ficheros crudos de rhasspy
-(`.onnx` + `.onnx.json`) y se convierten **en el dispositivo** (tokens.txt desde
-`phoneme_id_map` + metadata Piper dentro del `.onnx`).
+| **LITE** (normal) | `./gradlew :app:assembleDebug` | Descarga los modelos en el primer uso | `1.0.2-nllb` |
+| **LITE-OCR** | `./gradlew :app:assembleDebug -Pocrbundle=true` | Lleva los modelos OCR + VAD en assets | `1.0-nllb-lite` |
+| **FULL** | `./gradlew :app:assembleDebug -Pbundled=true` | Lleva **todos** los modelos (NLLB + Whisper + OCR + VAD + Piper) en assets | `1.0-nllb-full` |
 
 ### Requisitos
 
 - Android **8.0 (API 26)** o superior.
 - Dispositivo **arm64-v8a** (la mayoría de móviles modernos). El APK trae una sola ABI.
-- **~700 MB libres** para la primera descarga de modelos (traducción + voz + VAD).
+- **~1,1 GB libres** para la primera descarga de modelos (NLLB ≈ 900 MB + Whisper + VAD).
 - Para compilar: **JDK 17**, **Android SDK 35**, **NDK 27.0.12077973**, **CMake 3.22.1**.
 
 ### Cómo compilar
 
 ```bash
-# 1. Librerías nativas (llama.cpp + whisper.cpp → .a estáticas para arm64-v8a)
-./scripts/fetch-deps.sh          # clona llama.cpp / whisper.cpp fijados (submódulos)
-./scripts/build_native.sh        # los compila con el NDK
+# 1. Librería nativa (whisper.cpp → .a estática para arm64-v8a)
+./scripts/fetch-deps.sh                  # clona whisper.cpp fijado (submódulo)
+LIBS=whisper ./scripts/build_native.sh   # lo compila con el NDK
 
 # 2. La app
-./gradlew :app:assembleDebug     # → app/build/outputs/apk/debug/app-debug.apk
-./gradlew :app:testDebugUnitTest # tests unitarios de host
+./gradlew :app:assembleDebug         # → app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:testDebugUnitTest     # tests unitarios de host
 
 # 3. Instalar
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-#### Variante FULL (todos los modelos por defecto incluidos)
+> `scripts/build_native.sh` todavía sabe compilar `llama.cpp` (`LIBS="llama whisper"`),
+> pero la variante NLLB ya no lo enlaza: `app/src/main/cpp/CMakeLists.txt` solo compila
+> `whisperjni`.
 
-Opcionalmente se puede compilar una APK **FULL** que lleva los modelos y voces por
-defecto *dentro* del APK (no se descarga nada en el primer arranque). Mismas
-fuentes, gobernada por la propiedad Gradle `bundled` — **sin product flavors**, así
-que el build normal (LITE) queda intacto:
+#### Variante FULL (todos los modelos por defecto incluidos)
 
 ```bash
 ./scripts/fetch_bundled_assets.sh              # descarga los modelos a app/bundled-assets/
-./gradlew :app:assembleDebug -Pbundled=true    # → app/build/outputs/apk/full/traductor-full-arm64-debug.apk
+./gradlew :app:assembleDebug -Pbundled=true    # → dist-final/traductor-nllb-full-arm64-debug.apk
 ```
 
-La APK FULL incluye Qwen3.5-0.8B-Q4_K_M, Whisper base, Silero VAD, los modelos OCR
-PP-OCRv6 tiny y las voces Piper por defecto (ES `es_AR-daniela-high`, EN
-`en_US-hfc_female-medium`) con su `tokens.txt` y `espeak-ng-data`. En el primer
-arranque se **copian de assets a almacenamiento privado** (con progreso) en vez de
-descargarse; cualquier otro modelo o voz se sigue descargando normal. La carpeta
-`app/bundled-assets/` la genera el script y no se versiona (ver `.gitignore`).
-
-Si los submódulos no están inicializados, `fetch-deps.sh` los clona en los commits
-fijados:
-
-- `llama.cpp` → `4f5406761517648c23dbd60ea5ade37f77a316c9`
-- `whisper.cpp` → `4afec37b797ab531aaf363208d79d541fbc17ff4`
+La APK FULL incluye NLLB-200 (encoder + decoder + tokenizador), Whisper base, Silero
+VAD, los modelos OCR PP-OCRv6 tiny y las voces Piper por defecto (ES
+`es_AR-daniela-high`, EN `en_US-hfc_female-medium`) con su `tokens.txt` y
+`espeak-ng-data`. En el primer arranque se **copian de assets a almacenamiento privado**
+(con progreso) en vez de descargarse; cualquier otro modelo o voz se sigue descargando
+normal. La carpeta `app/bundled-assets/` la genera el script y no se versiona
+(ver `.gitignore`).
 
 ### Estructura del repositorio
 
@@ -392,17 +395,21 @@ traductor/
 │   ├── build.gradle.kts
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/zota/traductor/   # Kotlin: pipeline, ASR, TTS, OCR, UI
-│       │   ├── cpp/                       # puentes JNI + llama.cpp/whisper.cpp (submódulos)
+│       │   ├── java/com/zota/traductor/   # Kotlin: NllbEngine/Tokenizer, ASR, TTS, OCR, UI
+│       │   ├── cpp/                       # whisper_jni.cpp + whisper.cpp (submódulo)
+│       │   ├── assets/nllb/tokenizer.bin  # tokenizador NLLB (viaja en la APK)
 │       │   ├── res/                       # layouts, strings (es/en), mipmaps, icono adaptativo
 │       │   └── AndroidManifest.xml
 │       └── test/                          # tests unitarios de host (JUnit)
 ├── assets/icon/                           # fuentes del icono + generate_icons.py
-├── docs/                                  # web bilingüe (GitHub Pages)
+├── jvmharness/                            # arnés JVM: ejecuta NllbEngine en el escritorio
 ├── scripts/
 │   ├── fetch-deps.sh                      # clona las dependencias fijadas
 │   ├── build_native.sh                    # build NDK de las librerías nativas
 │   ├── fetch_bundled_assets.sh            # variante FULL: descarga los modelos a empaquetar
+│   ├── fetch_ocr_bundle.sh                # variante LITE-OCR: descarga el OCR a empaquetar
+│   ├── build_nllb_tokenizer.py            # tokenizer.json → assets/nllb/tokenizer.bin
+│   ├── nllb_onnx.py                       # pipeline NLLB de referencia en Python (validación)
 │   └── bundled_manifest.py                # variante FULL: genera el manifest de assets
 ├── gradle/ · gradlew · settings.gradle.kts
 └── README.md
@@ -422,26 +429,25 @@ traductor/
 
 | Componente | Licencia | Uso |
 |---|---|---|
-| [llama.cpp](https://github.com/ggml-org/llama.cpp) | MIT | Inferencia LLM local |
+| [NLLB-200](https://huggingface.co/facebook/nllb-200-distilled-600M) | CC-BY-NC-4.0 | Modelo de traducción (encoder/decoder) |
+| [ONNX Runtime](https://github.com/microsoft/onnxruntime) | MIT | Inferencia NLLB + VAD + OCR |
 | [whisper.cpp](https://github.com/ggml-org/whisper.cpp) | MIT | Reconocimiento de voz |
 | [Whisper](https://github.com/openai/whisper) | MIT | Modelo ASR |
+| [Silero VAD](https://github.com/snakers4/silero-vad) | MIT | Detección de actividad de voz |
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache-2.0 | Runtime de Piper TTS |
 | [Piper](https://github.com/rhasspy/piper) | MIT | Voces neuronales TTS |
 | [espeak-ng](https://github.com/espeak-ng/espeak-ng) | GPL-3.0 | Fonemización de Piper |
 | [PaddleOCR (PP-OCR)](https://github.com/PaddlePaddle/PaddleOCR) | Apache-2.0 | OCR de fotos |
-| [ONNX Runtime](https://github.com/microsoft/onnxruntime) | MIT | Inferencia VAD + OCR |
-| [Silero VAD](https://github.com/snakers4/silero-vad) | MIT | Detección de actividad de voz |
-| [Qwen3.5-0.8B GGUF](https://huggingface.co/lmstudio-community/Qwen3.5-0.8B-GGUF) | Apache-2.0 | Modelo de traducción |
 
-Los ficheros de modelos se descargan de sus repositorios oficiales y quedan sujetos
-a sus propias licencias.
+Los ficheros de modelos se descargan de sus repositorios oficiales y quedan sujetos a
+sus propias licencias: los pesos de **NLLB-200 están bajo CC-BY-NC-4.0
+(no comercial)**.
 
 ### Créditos
 
 **Creado por [Andres Mag](https://github.com/) · Cuba.** 🇨🇺
 
-Construido sobre el trabajo de la comunidad de código abierto citada arriba. La
-historia completa está en [`docs/index.html`](docs/index.html).
+Construido sobre el trabajo de la comunidad de código abierto citada arriba.
 
 ### Licencia
 
@@ -452,6 +458,6 @@ terceros conservan sus propias licencias (ver arriba).
 
 <div align="center">
 
-**Traductor v0.9.0** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
+**Traductor v1.0-nllb** · Made with ❤️ in Cuba 🇨🇺 · 100% offline
 
 </div>

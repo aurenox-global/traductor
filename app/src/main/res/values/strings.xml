@@ -56,7 +56,7 @@
 
     <!-- Ajustes -->
     <string name="settings">Ajustes</string>
-    <string name="settings_mt_title">Modelo de traducción (Qwen GGUF)</string>
+    <string name="settings_mt_title">Modelo de traducción (NLLB-200 · ONNX)</string>
     <string name="settings_asr_title">Modelo de voz (Whisper)</string>
     <string name="settings_vad_title">Detector de voz (VAD)</string>
 
@@ -81,10 +81,19 @@
     <string name="settings_missing">No descargado</string>
     <string name="settings_imported">Importado</string>
     <string name="settings_downloading">Descargando…</string>
-    <string name="import_gguf">Importar GGUF</string>
+    <string name="settings_nllb_desc">Traductor dedicado NLLB-200-distilled-600M (200 idiomas) por ONNX Runtime. Es el ÚNICO motor de traducción (sin LLM). Requiere descargar ~900 MB de modelos ONNX.</string>
     <string name="import_whisper">Importar modelo Whisper</string>
-    <string name="import_choose_mt">Elige un GGUF de Qwen</string>
     <string name="import_choose_asr">Elige un modelo Whisper (.bin/.gguf)</string>
+
+    <!-- Importar modelos NLLB (encoder + decoder + tokenizer.bin) -->
+    <string name="import_nllb">Importar modelos NLLB</string>
+    <string name="nllb_import_choose">Elige la carpeta con los modelos NLLB…</string>
+    <string name="nllb_import_empty">La carpeta seleccionada está vacía.</string>
+    <string name="nllb_import_missing">Faltan ficheros: %1$s.\n\nSelecciona la carpeta que contenga el encoder ONNX, el decoder ONNX y tokenizer.bin.</string>
+    <string name="nllb_import_start">Importando modelos NLLB…</string>
+    <string name="nllb_import_done">Modelos NLLB importados. Ya no hace falta descargarlos.</string>
+    <string name="nllb_tokenizer_label">NLLB tokenizador</string>
+    <string name="nllb_tokenizer_bundled">Incluido en la APK</string>
 
     <!-- Historial -->
     <string name="history">Historial</string>

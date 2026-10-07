@@ -7,14 +7,16 @@
 # `app/bundled-assets/` como srcDir de assets.
 #
 # Contenido (todo lo que la app descargaría en el primer arranque):
-#   files/Qwen3.5-0.8B-Q4_K_M.gguf   traducción (llama.cpp)
-#   files/ggml-base.bin              Whisper base (ASR)
-#   files/silero_vad.onnx            VAD Silero v5
-#   files/ppocr_v6_det.onnx          OCR PP-OCRv6 tiny detección
-#   files/ppocr_v6_rec.onnx          OCR PP-OCRv6 tiny reconocimiento
-#   files/ppocr_v6_rec.yml            diccionario OCR (se parsea on-device)
+#   files/nllb_models/nllb_encoder_model_quantized.onnx   NLLB-200 encoder (ONNX int8)
+#   files/nllb_models/nllb_decoder_model_merged_quantized.onnx  NLLB-200 decoder (ONNX int8)
+#   files/nllb_models/tokenizer.bin                  tokenizador NLLB (del APK)
+#   files/ggml-base.bin                              Whisper base (ASR)
+#   files/silero_vad.onnx                            VAD Silero v5
+#   files/ppocr_v6_det.onnx                          OCR PP-OCRv6 tiny detección
+#   files/ppocr_v6_rec.onnx                          OCR PP-OCRv6 tiny reconocimiento
+#   files/ppocr_v6_rec.yml                           diccionario OCR (se parsea on-device)
 #   piper/<id>/{model.onnx,voice.onnx.json,tokens.txt,espeak-ng-data/**}
-#                                    voces Piper ES y EN del catálogo
+#                                                    voces Piper ES y EN del catálogo
 #
 # Los ficheros NO se versionan (ver .gitignore): se regeneran con este script.
 set -euo pipefail
@@ -22,11 +24,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$ROOT/app/bundled-assets/bundled"
 FILES="$DEST/files"
+NLLB_DIR="$FILES/nllb_models"
 PIPER="$DEST/piper"
 TMP="${TMPDIR:-/tmp}/traductor-bundled"
-mkdir -p "$FILES" "$PIPER" "$TMP"
+mkdir -p "$FILES" "$NLLB_DIR" "$PIPER" "$TMP"
 
-HF_QWEN="https://huggingface.co/lmstudio-community/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q4_K_M.gguf"
+HF_NLLB="https://huggingface.co/Xenova/nllb-200-distilled-600M/resolve/main"
 HF_WHISPER="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
 VAD_URL="https://raw.githubusercontent.com/snakers4/silero-vad/master/src/silero_vad/data/silero_vad.onnx"
 OCR_DET="https://huggingface.co/PaddlePaddle/PP-OCRv6_tiny_det_onnx/resolve/main/inference.onnx"
@@ -49,8 +52,17 @@ dl() { # url dest [min_bytes]
   mv "$dest.part" "$dest"
 }
 
-log "modelos de traducción / ASR / VAD / OCR"
-dl "$HF_QWEN"    "$FILES/Qwen3.5-0.8B-Q4_K_M.gguf" 500000000
+log "modelos de traducción (NLLB ONNX) / ASR / VAD / OCR"
+dl "$HF_NLLB/onnx/encoder_model_quantized.onnx"                "$NLLB_DIR/nllb_encoder_model_quantized.onnx" 400000000
+dl "$HF_NLLB/onnx/decoder_model_merged_quantized.onnx"         "$NLLB_DIR/nllb_decoder_model_merged_quantized.onnx" 400000000
+# El tokenizador se genera en el APK (scripts/build_nllb_tokenizer.py): se copia el asset.
+TK_SRC="$ROOT/app/src/main/assets/nllb/tokenizer.bin"
+if [ -f "$TK_SRC" ]; then
+  cp "$TK_SRC" "$NLLB_DIR/tokenizer.bin"
+  echo "tokenizador copiado desde assets ($(du -h "$NLLB_DIR/tokenizer.bin" | cut -f1))"
+else
+  echo "AVISO: falta $TK_SRC (se omite tokenizer.bin del bundle)" >&2
+fi
 dl "$HF_WHISPER" "$FILES/ggml-base.bin"              140000000
 dl "$VAD_URL"    "$FILES/silero_vad.onnx"            1000000
 dl "$OCR_DET"    "$FILES/ppocr_v6_det.onnx"          1000000
@@ -88,5 +100,5 @@ log "manifest"
 python3 "$ROOT/scripts/bundled_manifest.py"
 
 log "resumen"
-du -sh "$FILES" "$PIPER" "$DEST"
+du -sh "$FILES" "$NLLB_DIR" "$PIPER" "$DEST"
 echo "OK: assets bundleados en $DEST"

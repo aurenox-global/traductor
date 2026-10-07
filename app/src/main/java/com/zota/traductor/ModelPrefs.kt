@@ -12,7 +12,6 @@ object ModelPrefs {
     private const val PREF = "traductor_prefs"
 
     private const val K_ASR = "active_asr_path"
-    private const val K_MT = "active_mt_path"
     private const val K_SRC = "last_source"
     private const val K_DST = "last_target"
     private const val K_AUTO_TTS = "auto_tts"
@@ -29,14 +28,6 @@ object ModelPrefs {
     }
     fun clearActiveAsr(ctx: Context) {
         p(ctx).edit().remove(K_ASR).apply()
-    }
-
-    fun activeMtPath(ctx: Context): String? = p(ctx).getString(K_MT, null)
-    fun setActiveMt(ctx: Context, file: File) {
-        p(ctx).edit().putString(K_MT, file.absolutePath).apply()
-    }
-    fun clearActiveMt(ctx: Context) {
-        p(ctx).edit().remove(K_MT).apply()
     }
 
     // ---- idiomas ----

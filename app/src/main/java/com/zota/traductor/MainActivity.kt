@@ -447,13 +447,8 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
             )
         }
 
-        // Importante (fix): si el usuario ya IMPORTÓ (o descargó) un modelo, NO se
-        // descarga el de por defecto. `resolveMt/resolveAsr` SÍ tienen en cuenta el
-        // modelo activo y los importados (filesDir/mt_imports, whisper_imports).
-        val pending = ArrayList<ModelManager.ModelSpec>()
-        if (ModelManager.resolveAsr(this) == null) pending += ModelManager.ASR_BASE
-        if (ModelManager.resolveMt(this) == null) pending += ModelManager.MT
-        if (!ModelManager.isPresent(this, ModelManager.VAD)) pending += ModelManager.VAD
+        val pending = ModelManager.FIRST_RUN.filter { !ModelManager.isPresent(this, it) } +
+            listOfNotNull(ModelManager.VAD.takeIf { !ModelManager.isPresent(this, it) })
         if (pending.isEmpty()) { setStatus(getString(R.string.status_models_ready)); return }
 
         setStatus(getString(R.string.status_downloading))

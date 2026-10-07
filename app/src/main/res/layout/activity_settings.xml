@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ===== Modelo de traducción (Qwen) ===== -->
+            <!-- ===== Motor de traducción: NLLB-200 (ONNX). Único motor (sin LLM). ===== -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -56,19 +56,29 @@
                 android:textStyle="bold"
                 android:textColor="@color/accent" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/settings_nllb_desc"
+                android:textSize="12sp"
+                android:textColor="@color/muted" />
+
             <LinearLayout
-                android:id="@+id/containerMt"
+                android:id="@+id/containerNllb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnImportGguf"
+                android:id="@+id/btnImportNllb"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="@string/import_gguf" />
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="@string/import_nllb" />
 
             <!-- ===== Modelo de voz (Whisper) ===== -->
             <TextView

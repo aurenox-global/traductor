@@ -287,15 +287,13 @@ object BundledAssets {
     }
 
     /**
-     * Usa los modelos bundleados por defecto: Whisper base, Qwen y la primera voz
+     * Usa los modelos bundleados por defecto: Whisper base y la primera voz
      * Piper disponible. No pisa selecciones ya guardadas por el usuario.
+     * (No hay modelo de traducción GGUF: el traductor son los ONNX de NLLB.)
      */
     fun applyDefaults(ctx: Context) {
         if (ModelPrefs.activeAsrPath(ctx) == null && ModelManager.isPresent(ctx, ModelManager.ASR_BASE)) {
             ModelPrefs.setActiveAsr(ctx, ModelManager.fileFor(ctx, ModelManager.ASR_BASE))
-        }
-        if (ModelPrefs.activeMtPath(ctx) == null && ModelManager.isPresent(ctx, ModelManager.MT)) {
-            ModelPrefs.setActiveMt(ctx, ModelManager.fileFor(ctx, ModelManager.MT))
         }
         if (ModelPrefs.activePiperVoiceId(ctx) == null) {
             VOICES.firstOrNull { PiperVoiceManager.isReady(PiperVoiceManager.specDir(ctx, it)) }

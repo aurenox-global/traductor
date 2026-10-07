@@ -216,7 +216,8 @@ object SeedingLog {
             dir.walkTopDown().forEach { if (it.isFile) n += it.length() }
             return n
         }
-        add("Qwen (MT)", ModelManager.fileFor(ctx, ModelManager.MT))
+        add("NLLB encoder", NllbModels.fileFor(ctx, NllbModels.ENCODER))
+        add("NLLB decoder", NllbModels.fileFor(ctx, NllbModels.DECODER))
         add("Whisper base (ASR)", ModelManager.fileFor(ctx, ModelManager.ASR_BASE))
         add("VAD silero", ModelManager.fileFor(ctx, ModelManager.VAD))
         add("OCR det v6", OcrModels.fileFor(ctx, OcrModels.DET_V6))

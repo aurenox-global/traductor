@@ -51,6 +51,14 @@ signing.properties
 .tmp/
 *.tmp
 
-# ---------------- Variante FULL (assets generados) ----------------
+# ---------------- Variantes con assets generados ----------------
 # Modelos bundleados para -Pbundled=true; se generan con scripts/fetch_bundled_assets.sh
 app/bundled-assets/
+# Motor OCR empaquetado para -Pocrbundle=true; se genera con scripts/fetch_ocr_bundle.sh
+app/bundled-ocr/
+
+# ---------------- Arnes JVM (jvmharness) ----------------
+# El jar de ONNX Runtime y las clases compiladas NO se versionan (son grandes y
+# se regeneran; ver jvmharness/README.md).
+jvmharness/libs/
+jvmharness/out/

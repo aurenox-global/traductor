@@ -15,7 +15,10 @@ import java.net.URL
  *
  * Los modelos descargados de fabrica viven en `filesDir/`.
  * Los importados por el usuario viven en subcarpetas para poder distinguir
- * Whisper de Qwen aunque compartan extensiones (.bin / .gguf).
+ * Whisper del resto aunque compartan extensiones (.bin / .gguf).
+ *
+ * Variante NLLB puro: NO hay ningun modelo de traduccion GGUF/LLM aqui.
+ * El traductor son los ONNX de NLLB (ver [NllbModels]).
  */
 object ModelManager {
 
@@ -24,12 +27,8 @@ object ModelManager {
     /** Subcarpeta de los Whisper importados. */
     const val DIR_WHISPER_IMPORTS = "whisper_imports"
 
-    /** Subcarpeta de los GGUF (Qwen) importados. */
-    const val DIR_MT_IMPORTS = "mt_imports"
-
-    /** Extensiones aceptadas al importar. */
+    /** Extensiones aceptadas al importar ASR. */
     val WHISPER_EXTS = listOf("bin", "gguf")
-    val GGUF_EXTS = listOf("gguf", "bin")
 
     data class ModelSpec(
         val id: String,
@@ -37,16 +36,6 @@ object ModelManager {
         val url: String,
         val approxBytes: Long,
         val label: String
-    )
-
-    // ---------------- Modelo de traduccion (Qwen) ----------------
-
-    val MT = ModelSpec(
-        id = "mt",
-        fileName = "Qwen3.5-0.8B-Q4_K_M.gguf",
-        url = "https://huggingface.co/lmstudio-community/Qwen3.5-0.8B-GGUF/resolve/main/Qwen3.5-0.8B-Q4_K_M.gguf",
-        approxBytes = 527_502_816L,
-        label = "Qwen3.5-0.8B Q4_K_M (503 MB)"
     )
 
     // ---------------- Modelos de voz (Whisper) ----------------
@@ -85,11 +74,13 @@ object ModelManager {
         label = "Silero VAD v5 · ONNX (2,2 MB)"
     )
 
-    val MT_DOWNLOADS: List<ModelSpec> = listOf(MT)
     val WHISPER_DOWNLOADS: List<ModelSpec> = listOf(ASR_TINY, ASR_BASE, ASR_SMALL)
 
-    /** Descargas obligatorias del primer arranque (ASR base + MT). */
-    val FIRST_RUN: List<ModelSpec> = listOf(ASR_BASE, MT)
+    /**
+     * Descargas obligatorias del primer arranque. Solo el ASR (Whisper): el
+     * traductor son los ONNX de NLLB, que se descargan aparte desde Ajustes.
+     */
+    val FIRST_RUN: List<ModelSpec> = listOf(ASR_BASE)
 
     // ---------------- Rutas ----------------
 
@@ -106,10 +97,6 @@ object ModelManager {
     /** Modelos Whisper importados por el usuario (ordenados por nombre). */
     fun importedWhisper(ctx: Context): List<File> =
         listModels(importDir(ctx, DIR_WHISPER_IMPORTS), WHISPER_EXTS)
-
-    /** Modelos Qwen importados por el usuario (ordenados por nombre). */
-    fun importedMt(ctx: Context): List<File> =
-        listModels(importDir(ctx, DIR_MT_IMPORTS), GGUF_EXTS)
 
     private fun listModels(dir: File, exts: List<String>): List<File> =
         (dir.listFiles() ?: emptyArray())
@@ -128,16 +115,6 @@ object ModelManager {
             if (isPresent(ctx, spec)) return fileFor(ctx, spec)
         }
         return importedWhisper(ctx).firstOrNull()
-    }
-
-    /** Resuelve el modelo de traduccion activo. */
-    fun resolveMt(ctx: Context): File? {
-        ModelPrefs.activeMtPath(ctx)?.let { p ->
-            val f = File(p)
-            if (f.isFile && f.length() > 1024) return f
-        }
-        if (isPresent(ctx, MT)) return fileFor(ctx, MT)
-        return importedMt(ctx).firstOrNull()
     }
 
     // ---------------- Descarga ----------------

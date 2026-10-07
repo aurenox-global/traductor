@@ -21,9 +21,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Bucle completo: AudioRecord 16k mono -> VAD -> segmentos -> Whisper (ASR) -> Qwen (MT) -> UI.
- * Los idiomas origen/destino se propagan de verdad: Whisper recibe el idioma forzado
- * (o autodetecta) y Qwen recibe "Traduce de <origen> a <destino>".
+ * Bucle completo: AudioRecord 16k mono -> VAD -> segmentos -> Whisper (ASR) ->
+ * **NLLB-200 (ONNX)** como ÚNICO motor de traducción -> UI.
+ *
+ * Variante NLLB puro: NO hay LLM (Qwen/llama.cpp) en el camino de traducción.
+ * Si NLLB falla, se muestra el error claramente; nunca se carga un GGUF.
  */
 class TranslationPipeline(
     private val ctx: Context,
@@ -42,31 +44,11 @@ class TranslationPipeline(
     companion object {
         private const val TAG = "Pipeline"
         const val SAMPLE_RATE = 16000
-
-        /**
-         * Contexto del LLM (tokens). 4096 es holgado para la KV cache de un 0.8B Q4
-         * (unos pocos MB) y evita el recorte del prompt en textos largos. Configurable.
-         */
-        const val MT_N_CTX = 4096
-
-        /** Presupuesto de entrada por trozo, en caracteres (~350-400 tokens). */
-        const val MAX_CHARS_PER_CHUNK = TextChunker.DEFAULT_MAX_CHARS
-
-        /** Tope y suelo de tokens de salida por trozo. */
-        private const val MAX_OUTPUT_TOKENS = 768
-        private const val MIN_OUTPUT_TOKENS = 192
-
-        /**
-         * Presupuesto de salida para un trozo: ~mitad de caracteres, acotado.
-         * Reemplaza al `256` fijo que truncaba las traducciones largas.
-         */
-        fun maxTokensFor(chunk: String): Int =
-            min(MAX_OUTPUT_TOKENS, max(MIN_OUTPUT_TOKENS, chunk.length / 2))
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    // ASR/MT se serializan (un solo modelo cada uno)
+    // ASR/NLLB se serializan (un solo modelo cada uno)
     private val inferMutex = Mutex()
 
     @Volatile private var listening = false
@@ -76,9 +58,12 @@ class TranslationPipeline(
     private var vad: VadDetector? = null
 
     private var whisperHandle: Long = 0L
-    private var llamaHandle: Long = 0L
     private var loadedAsrPath: String? = null
-    private var loadedMtPath: String? = null
+
+    /** Único motor de traducción: NLLB-200 por ONNX Runtime. */
+    private var nllb: NllbEngine? = null
+
+    private fun nllbEngine(): NllbEngine = nllb ?: NllbEngine(ctx).also { nllb = it }
 
     private val cancelRequested = java.util.concurrent.atomic.AtomicBoolean(false)
 
@@ -87,7 +72,7 @@ class TranslationPipeline(
     private var ttsEnabled = true
     var tts: TtsRouter? = null
 
-    /** Ultimo idioma detectado por Whisper (para el swap y para el prompt). */
+    /** Ultimo idioma detectado por Whisper (para el swap y para el fallback de `auto`). */
     @Volatile var lastDetectedLang: String = ""
         private set
 
@@ -98,20 +83,19 @@ class TranslationPipeline(
      */
     fun loadModels(): Boolean {
         val asr: File? = ModelManager.resolveAsr(ctx)
-        val mt: File? = ModelManager.resolveMt(ctx)
 
         if (asr == null || !asr.isFile) { cb.onError("Falta el modelo de voz (Whisper)"); return false }
-        if (mt == null || !mt.isFile) { cb.onError("Falta el modelo de traducción (Qwen)"); return false }
 
+        // Traductor: solo los ONNX de NLLB. Sin LLM ni GGUF de traducción.
+        if (!NllbModels.isReady(ctx)) {
+            cb.onError("Faltan los modelos NLLB (encoder/decoder ONNX). Descárgalos en Ajustes.")
+            return false
+        }
         if (!WhisperBridge.ensureLoaded()) { cb.onError("No se pudo cargar libwhisperjni.so"); return false }
-        if (!LlamaBridge.ensureLoaded()) { cb.onError("No se pudo cargar libllamajni.so"); return false }
 
         // recarga si cambio el archivo activo
         if (whisperHandle != 0L && loadedAsrPath != asr.absolutePath) {
             WhisperBridge.nativeFree(whisperHandle); whisperHandle = 0L
-        }
-        if (llamaHandle != 0L && loadedMtPath != mt.absolutePath) {
-            LlamaBridge.nativeFree(llamaHandle); llamaHandle = 0L
         }
 
         cb.onStatus("Cargando Whisper (${asr.name})…")
@@ -121,141 +105,63 @@ class TranslationPipeline(
         }
         if (whisperHandle == 0L) { cb.onError("Whisper no pudo inicializar"); return false }
 
-        cb.onStatus("Cargando Qwen (${mt.name})…")
-        if (llamaHandle == 0L) {
-            llamaHandle = LlamaBridge.nativeInit(mt.absolutePath, threadsForMt(), MT_N_CTX)
-            if (llamaHandle != 0L) loadedMtPath = mt.absolutePath
-        }
-        if (llamaHandle == 0L) { cb.onError("Qwen no pudo inicializar"); return false }
+        cb.onStatus("Cargando NLLB-200 (ONNX)…")
+        if (!nllbEngine().load()) { cb.onError("NLLB no pudo inicializar"); return false }
 
-        cb.onStatus("Modelos listos")
+        cb.onStatus("Modelos listos (NLLB)")
         return true
     }
 
     private fun threadsForAsr(): Int = min(4, Runtime.getRuntime().availableProcessors())
-    private fun threadsForMt(): Int = min(4, Runtime.getRuntime().availableProcessors())
 
-    fun modelsLoaded(): Boolean = whisperHandle != 0L && llamaHandle != 0L
+    fun modelsLoaded(): Boolean =
+        whisperHandle != 0L && nllb?.isLoaded() == true
 
     /**
      * Traduce un texto ya escrito (sin ASR), con idiomas reales.
      *
-     * Si el texto es largo se parte en trozos (párrafos -> frases, sin cortar
-     * palabras) que quepan holgados en el contexto, se traduce cada trozo con un
-     * presupuesto de tokens proporcional a su tamaño y se recomponen unidos por
-     * "\n". Reporta progreso por [Callbacks.onStatus] y se puede cancelar con
-     * [cancelTranslation].
+     * El troceado por frases y el presupuesto del contexto los gestiona el propio
+     * [NllbEngine] internamente. Si NLLB no está cargado o falla, se informa por
+     * [Callbacks.onError] y se devuelve cadena vacía (NO se cae a ningún LLM).
      */
     suspend fun translateText(text: String, source: String, target: String): String {
-        if (llamaHandle == 0L) return ""
-        return inferMutex.withLock {
-            val input = text.trim()
-            if (input.isEmpty()) return@withLock ""
+        val input = text.trim()
+        if (input.isEmpty()) return ""
 
+        return inferMutex.withLock {
             cancelRequested.set(false)
             lastCancelled = false
             untranslatedChunks = 0
+            cb.onStatus("Traduciendo con NLLB-200…")
 
-            val chunks = TextChunker.chunk(input, MAX_CHARS_PER_CHUNK)
-
-            // Caso corto de una sola línea: comportamiento previo + anti-eco.
-            if (chunks.size <= 1) {
-                val one = chunks.firstOrNull() ?: input
-                cb.onStatus("Traduciendo…")
-                return@withLock translateChunk(one, source, target, 1, 1)
+            val out = try {
+                withContext(Dispatchers.Default) {
+                    nllbEngine().translate(input, source, target)
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "NLLB fallo: ${t.message}")
+                cb.onError("La traducción NLLB falló: ${t.message ?: "error desconocido"}")
+                return@withLock ""
             }
 
-            val parts = ArrayList<String>(chunks.size)
-            for ((i, chunk) in chunks.withIndex()) {
-                if (cancelRequested.get()) { lastCancelled = true; break }
-                cb.onStatus("Traduciendo trozo ${i + 1}/${chunks.size}…")
-                parts.add(translateChunk(chunk, source, target, i + 1, chunks.size))
+            if (out.isBlank()) {
+                cb.onError("NLLB no produjo traducción (salida vacía). Revisa los ONNX en Ajustes.")
+                return@withLock ""
             }
-            parts.filter { it.isNotBlank() }.joinToString("\n")
+
+            // Trozos que NLLB no pudo traducir (marcador ⟦sin traducir⟧).
+            untranslatedChunks = out.lines().count { it.contains(Prompts.UNTRANSLATED_MARKER) }
+            out
         }
     }
 
-    /**
-     * Nº de trozos que quedaron marcados como NO traducidos (eco persistente).
-     * La UI lo usa para avisar. Se resetea en cada [translateText].
-     */
+    /** Nº de trozos que quedaron marcados como NO traducidos. Se resetea en cada [translateText]. */
     @Volatile var untranslatedChunks: Int = 0
         private set
 
-    private suspend fun generate(system: String, user: String, src: String): String =
-        withContext(Dispatchers.Default) {
-            Prompts.cleanOutput(
-                LlamaBridge.nativeGenerate(
-                    llamaHandle, system, user, maxTokensFor(src), null
-                )
-            )
-        }
-
-    /** ¿La salida es inservible (vacía, eco del texto o eco del propio prompt)? */
-    private fun bad(out: String, src: String): Boolean =
-        out.isBlank() || Prompts.looksLikeInstructionEcho(out) || Prompts.isEcho(src, out)
-
-    /**
-     * Traduce un trozo con detección de ECO y reintentos (v0.9.3):
-     *   1) prompt normal;
-     *   2) si el modelo copia, prompt "tajante" (no copiar aunque parezca orden);
-     *   3) si sigue copiando, granularidad MENOR (líneas -> frases);
-     *   4) si aún copia, se deja el original con el marcador [Prompts.UNTRANSLATED_MARKER]
-     *      (nunca se hace pasar el original por traducción) + aviso de estado.
-     *
-     * Solo se comprueba el eco cuando el idioma origen != destino (o es AUTO).
-     */
-    private suspend fun translateChunk(
-        chunk: String, source: String, target: String, idx: Int, total: Int
-    ): String {
-        val checkEcho = source == Languages.AUTO.code || source != target
-        val system = Prompts.systemPrompt(target, source)
-        if (!checkEcho) return generate(system, Prompts.userPrompt(chunk, target, source), chunk)
-
-        var out = generate(system, Prompts.userPrompt(chunk, target, source), chunk)
-        if (!bad(out, chunk)) return out
-        if (cancelRequested.get()) return out
-
-        // Reintento 1: prompt tajante.
-        cb.onStatus("Reintentando trozo ${idx}/${total} (no copiar)…")
-        val strictSystem = Prompts.strictSystemPrompt(target, source)
-        val strict = generate(strictSystem, Prompts.userPrompt(chunk, target, source), chunk)
-        if (!bad(strict, chunk)) return strict
-
-        // Reintento 2: granularidad menor (líneas -> frases) con prompt tajante.
-        val units = TextChunker.retryUnits(chunk, MAX_CHARS_PER_CHUNK)
-        if (units.size > 1) {
-            cb.onStatus("Reintentando trozo ${idx}/${total} por frases…")
-            val sub = ArrayList<String>(units.size)
-            var echoedUnits = 0
-            for (u in units) {
-                if (cancelRequested.get()) break
-                val t = generate(strictSystem, Prompts.userPrompt(u, target, source), u)
-                if (bad(t, u)) {
-                    sub.add("${Prompts.UNTRANSLATED_MARKER} $u")
-                    echoedUnits++
-                } else {
-                    sub.add(t)
-                }
-            }
-            if (echoedUnits < units.size) {
-                untranslatedChunks += echoedUnits
-                return sub.joinToString("\n")
-            }
-        }
-
-        // Eco persistente: dejamos el original MARCADO (no como traducción).
-        untranslatedChunks++
-        cb.onStatus("No se pudo traducir un trozo (${idx}/${total})")
-        return "${Prompts.UNTRANSLATED_MARKER} $chunk"
-    }
-
-    /** Pide cancelar la traducción en curso (troceada o de un solo bloque). */
+    /** Pide cancelar la traducción en curso. (NLLB es síncrono: se respeta entre frases.) */
     fun cancelTranslation() {
         cancelRequested.set(true)
-        if (llamaHandle != 0L) {
-            try { LlamaBridge.nativeCancel(llamaHandle) } catch (_: Throwable) {}
-        }
     }
 
     /** true si la última [translateText] se abortó por cancelación. */
@@ -355,28 +261,25 @@ class TranslationPipeline(
                     if (original.isBlank()) return@withLock
                     cb.onSegment(original, detected)
 
-                    // El prompt usa el idioma origen real (detectado si era auto).
+                    // El idioma origen real (detectado si era auto) guía a NLLB.
                     val effectiveSource = if (sourceLang == Languages.AUTO.code) {
                         detected.ifBlank { Languages.AUTO.code }
                     } else sourceLang
 
-                    val system = Prompts.systemPrompt(targetLang, effectiveSource)
-                    val user = Prompts.userPrompt(original, targetLang, effectiveSource)
-
-                    val acc = StringBuilder()
-                    var lastEmit = 0L
-                    val full = withContext(Dispatchers.Default) {
-                        LlamaBridge.nativeGenerate(llamaHandle, system, user, maxTokensFor(original)) { piece ->
-                            acc.append(piece)
-                            val now = System.currentTimeMillis()
-                            if (now - lastEmit > 140) {
-                                lastEmit = now
-                                cb.onPartial(Prompts.cleanOutput(acc.toString()))
-                            }
+                    cb.onStatus("Traduciendo con NLLB-200…")
+                    val translated = withContext(Dispatchers.Default) {
+                        try {
+                            nllbEngine().translate(original, effectiveSource, targetLang)
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "NLLB fallo: ${t.message}")
+                            ""
                         }
                     }
-                    val translated = Prompts.cleanOutput(full)
-                    cb.onTranslation(original, translated.ifBlank { "(sin salida)" }, targetLang)
+                    if (translated.isBlank()) {
+                        cb.onError("NLLB no produjo traducción (salida vacía)")
+                        return@withLock
+                    }
+                    cb.onTranslation(original, translated, targetLang)
                     if (ttsEnabled) {
                         try { tts?.speak(translated, targetLang) } catch (_: Throwable) {}
                     }
@@ -403,7 +306,8 @@ class TranslationPipeline(
     fun release() {
         stop()
         if (whisperHandle != 0L) { WhisperBridge.nativeFree(whisperHandle); whisperHandle = 0L }
-        if (llamaHandle != 0L) { LlamaBridge.nativeFree(llamaHandle); llamaHandle = 0L }
+        try { nllb?.close() } catch (_: Throwable) {}
+        nllb = null
         scope.cancel()
     }
 

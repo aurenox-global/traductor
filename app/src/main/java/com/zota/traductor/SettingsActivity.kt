@@ -1,6 +1,9 @@
 package com.zota.traductor
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
@@ -19,24 +22,20 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * Ajustes: descarga / importacion / seleccion de los modelos Whisper y Qwen,
- * estado del VAD y gestion de voces Piper (TTS neuronal offline).
+ * Ajustes: descarga / importacion / seleccion de los modelos de voz (Whisper),
+ * los ONNX de traduccion (NLLB-200), estado del VAD y gestion de voces Piper.
+ *
+ * Variante NLLB puro: no hay modelo de traduccion GGUF/LLM que gestionar.
  */
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var b: ActivitySettingsBinding
     private val tts by lazy { TtsRouter(this) }
 
-    private val importGguf =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri == null) return@registerForActivityResult
-            importUri(uri, ModelManager.DIR_MT_IMPORTS, ModelManager.GGUF_EXTS, isMt = true)
-        }
-
     private val importWhisper =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
-            importUri(uri, ModelManager.DIR_WHISPER_IMPORTS, ModelManager.WHISPER_EXTS, isMt = false)
+            importUri(uri, ModelManager.DIR_WHISPER_IMPORTS, ModelManager.WHISPER_EXTS)
         }
 
     private val importPiper =
@@ -45,20 +44,28 @@ class SettingsActivity : AppCompatActivity() {
             importPiperVoices(uris)
         }
 
+    /** Selecciona una CARPETA (ACTION_OPEN_DOCUMENT_TREE) con los modelos NLLB. */
+    private val importNllbFolder =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            importNllbFromTree(uri)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(b.root)
 
         b.btnBack.setOnClickListener { finish() }
-        b.btnImportGguf.setOnClickListener {
-            importGguf.launch(arrayOf("application/octet-stream", "application/x-gguf", "*/*"))
-        }
         b.btnImportWhisper.setOnClickListener {
             importWhisper.launch(arrayOf("application/octet-stream", "*/*"))
         }
         b.btnImportPiper.setOnClickListener {
             importPiper.launch(arrayOf("application/octet-stream", "application/json", "*/*"))
+        }
+        b.btnImportNllb.setOnClickListener {
+            setStatus(getString(R.string.nllb_import_choose))
+            importNllbFolder.launch(null)
         }
         b.btnTestPiper.setOnClickListener { testPiper() }
         b.btnCancelPiper.setOnClickListener {
@@ -69,6 +76,8 @@ class SettingsActivity : AppCompatActivity() {
         b.switchPiper.setOnCheckedChangeListener { _, checked ->
             ModelPrefs.setPiperEnabled(this, checked)
         }
+
+        // Motor de traducción fijo: NLLB-200 (ONNX). No hay nada que conmutar.
 
         b.btnDiagRefresh.setOnClickListener {
             b.txtDiag.text = SeedingLog.format(this)
@@ -116,42 +125,31 @@ class SettingsActivity : AppCompatActivity() {
     // ---------------- construccion de la lista ----------------
 
     private fun refresh() {
-        b.containerMt.removeAllViews()
         b.containerAsr.removeAllViews()
         b.containerVad.removeAllViews()
         b.containerPiper.removeAllViews()
 
         val activeAsr = ModelPrefs.activeAsrPath(this)
-        val activeMt = ModelPrefs.activeMtPath(this)
         val effAsr = ModelManager.resolveAsr(this)?.absolutePath
-        val effMt = ModelManager.resolveMt(this)?.absolutePath
 
-        // --- Qwen ---
-        for (spec in ModelManager.MT_DOWNLOADS) {
-            val file = ModelManager.fileFor(this, spec)
-            addSpecRow(b.containerMt, spec, file, isAsr = false,
-                active = isActive(file, activeMt, effMt), isMt = true)
-        }
-        for (f in ModelManager.importedMt(this)) {
-            addFileRow(b.containerMt, f, imported = true,
-                active = isActive(f, activeMt, effMt), isMt = true)
-        }
+        // --- NLLB (único motor de traducción: ONNX) ---
+        refreshNllb()
 
         // --- Whisper ---
         for (spec in ModelManager.WHISPER_DOWNLOADS) {
             val file = ModelManager.fileFor(this, spec)
             addSpecRow(b.containerAsr, spec, file, isAsr = true,
-                active = isActive(file, activeAsr, effAsr), isMt = false)
+                active = isActive(file, activeAsr, effAsr))
         }
         for (f in ModelManager.importedWhisper(this)) {
             addFileRow(b.containerAsr, f, imported = true,
-                active = isActive(f, activeAsr, effAsr), isMt = false)
+                active = isActive(f, activeAsr, effAsr))
         }
 
         // --- VAD ---
         val vadFile = ModelManager.fileFor(this, ModelManager.VAD)
         addSpecRow(b.containerVad, ModelManager.VAD, vadFile, isAsr = false,
-            active = ModelManager.isPresent(this, ModelManager.VAD), isMt = false, showUse = false)
+            active = ModelManager.isPresent(this, ModelManager.VAD), showUse = false)
 
         // --- Piper ---
         refreshPiper()
@@ -160,6 +158,162 @@ class SettingsActivity : AppCompatActivity() {
         b.txtDiag.text = SeedingLog.format(this)
 
         setStatus("Modelo de voz activo: ${ModelManager.resolveAsr(this)?.name ?: "ninguno"}")
+    }
+
+    /** Filas de los ONNX de NLLB (encoder/decoder) + tokenizador. Descarga/import propia. */
+    private fun refreshNllb() {
+        b.containerNllb.removeAllViews()
+        for (spec in NllbModels.ALL) {
+            val file = NllbModels.fileFor(this, spec)
+            val present = NllbModels.isPresent(this, spec)
+            val detail = buildString {
+                append(if (present) getString(R.string.settings_present) else getString(R.string.settings_missing))
+                append(" · ")
+                append(if (present) ModelManager.human(file.length()) else ModelManager.human(spec.approxBytes))
+                if (present) append(" · ").append(file.absolutePath)
+            }
+            val row = inflateRow(b.containerNllb, spec.label, detail)
+            row.findViewById<ImageButton>(R.id.rowDownload).visibility =
+                if (present) View.GONE else View.VISIBLE
+            row.findViewById<MaterialButton>(R.id.rowUse).visibility = View.GONE
+            row.findViewById<ImageButton>(R.id.rowDelete).visibility =
+                if (present) View.VISIBLE else View.GONE
+            row.findViewById<ImageButton>(R.id.rowDownload).setOnClickListener { downloadNllb(spec) }
+            row.findViewById<ImageButton>(R.id.rowDelete).setOnClickListener {
+                confirmDelete(file, isAsr = false)
+            }
+            b.containerNllb.addView(row)
+        }
+
+        // Tokenizador: importado por el usuario o el que viaja en la APK.
+        val tk = NllbModels.tokenizerFile(this)
+        val tkImported = NllbModels.tokenizerImported(this)
+        val tkDetail = if (tkImported) {
+            getString(R.string.settings_imported) + " · " +
+                ModelManager.human(tk.length()) + " · " + tk.absolutePath
+        } else {
+            getString(R.string.nllb_tokenizer_bundled)
+        }
+        val tkRow = inflateRow(b.containerNllb, getString(R.string.nllb_tokenizer_label), tkDetail)
+        tkRow.findViewById<ImageButton>(R.id.rowDownload).visibility = View.GONE
+        tkRow.findViewById<MaterialButton>(R.id.rowUse).visibility = View.GONE
+        tkRow.findViewById<ImageButton>(R.id.rowDelete).visibility =
+            if (tkImported) View.VISIBLE else View.GONE
+        tkRow.findViewById<ImageButton>(R.id.rowDelete).setOnClickListener {
+            confirmDeleteFile(tk)
+        }
+        b.containerNllb.addView(tkRow)
+    }
+
+    private fun downloadNllb(spec: ModelManager.ModelSpec) {
+        showProgress()
+        setStatus(getString(R.string.settings_downloading) + " " + spec.label)
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    NllbModels.downloadOne(this@SettingsActivity, spec) { done, total ->
+                        runOnUiThread { setProgress(done, total) }
+                    }
+                }
+                setStatus("Descarga completada: ${spec.fileName}")
+            } catch (t: Throwable) {
+                setStatus("Error de descarga: ${t.message}")
+            } finally {
+                hideProgress()
+                refresh()
+            }
+        }
+    }
+
+    // ---------------- Importación de modelos NLLB ----------------
+
+    /**
+     * Importa los modelos NLLB desde la carpeta elegida (`ACTION_OPEN_DOCUMENT_TREE`).
+     * Clasifica los ficheros por nombre ([NllbImport.plan]); si falta alguno, avisa
+     * y no copia nada. Si están todos, los copia a la carpeta NLLB con los nombres
+     * que espera el motor y quedan como modelo activo (ya no se descargan).
+     */
+    private fun importNllbFromTree(treeUri: Uri) {
+        runCatching {
+            contentResolver.takePersistableUriPermission(
+                treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        val files: List<Pair<String, Uri>> = try {
+            listTreeFiles(treeUri)
+        } catch (t: Throwable) {
+            setStatus("Error leyendo la carpeta: ${t.message}")
+            return
+        }
+        if (files.isEmpty()) {
+            setStatus(getString(R.string.nllb_import_empty))
+            return
+        }
+
+        val plan = NllbImport.plan(files.map { it.first })
+        if (!plan.complete) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.import_nllb)
+                .setMessage(getString(R.string.nllb_import_missing, NllbImport.missingLabels(plan)))
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return
+        }
+
+        val uriByName: Map<String, Uri> = files.toMap()
+        showProgress()
+        setStatus(getString(R.string.nllb_import_start))
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    NllbModels.importAll(this@SettingsActivity, plan.matches, { uriByName.getValue(it) }) { done, total ->
+                        runOnUiThread { setProgress(done, total) }
+                    }
+                }
+                setStatus(getString(R.string.nllb_import_done))
+            } catch (t: Throwable) {
+                setStatus("Error importando NLLB: ${t.message}")
+            } finally {
+                hideProgress()
+                refresh()
+            }
+        }
+    }
+
+    /** Lista (nombre, uri) de los ficheros de una carpeta elegida con SAF. */
+    private fun listTreeFiles(treeUri: Uri): List<Pair<String, Uri>> {
+        val docId = DocumentsContract.getTreeDocumentId(treeUri)
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, docId)
+        val out = ArrayList<Pair<String, Uri>>()
+        contentResolver.query(
+            childrenUri,
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_MIME_TYPE
+            ), null, null, null
+        )?.use { c ->
+            while (c.moveToNext()) {
+                val name = c.getString(0) ?: continue
+                val id = c.getString(1) ?: continue
+                val mime = c.getString(2)
+                if (mime == DocumentsContract.Document.MIME_TYPE_DIR) continue
+                out += name to DocumentsContract.buildDocumentUriUsingTree(treeUri, id)
+            }
+        }
+        return out
+    }
+
+    private fun confirmDeleteFile(file: File) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_delete)
+            .setMessage(file.name)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.settings_delete) { _, _ ->
+                ModelManager.delete(file)
+                refresh()
+            }
+            .show()
     }
 
     private fun refreshPiper() {
@@ -241,7 +395,6 @@ class SettingsActivity : AppCompatActivity() {
         file: File,
         isAsr: Boolean,
         active: Boolean,
-        isMt: Boolean,
         showUse: Boolean = true
     ) {
         val present = ModelManager.isPresent(this, spec)
@@ -263,16 +416,16 @@ class SettingsActivity : AppCompatActivity() {
             downloadSpec(spec)
         }
         row.findViewById<MaterialButton>(R.id.rowUse).setOnClickListener {
-            if (isMt) ModelPrefs.setActiveMt(this, file) else ModelPrefs.setActiveAsr(this, file)
+            if (isAsr) ModelPrefs.setActiveAsr(this, file)
             refresh()
         }
         row.findViewById<ImageButton>(R.id.rowDelete).setOnClickListener {
-            confirmDelete(file, isMt, isAsr)
+            confirmDelete(file, isAsr)
         }
         parent.addView(row)
     }
 
-    private fun addFileRow(parent: LinearLayout, file: File, imported: Boolean, active: Boolean, isMt: Boolean) {
+    private fun addFileRow(parent: LinearLayout, file: File, imported: Boolean, active: Boolean) {
         val detail = buildString {
             append(getString(if (imported) R.string.settings_imported else R.string.settings_present))
             append(" · ").append(ModelManager.human(file.length()))
@@ -285,11 +438,11 @@ class SettingsActivity : AppCompatActivity() {
         row.findViewById<ImageButton>(R.id.rowDelete).visibility = View.VISIBLE
 
         row.findViewById<MaterialButton>(R.id.rowUse).setOnClickListener {
-            if (isMt) ModelPrefs.setActiveMt(this, file) else ModelPrefs.setActiveAsr(this, file)
+            ModelPrefs.setActiveAsr(this, file)
             refresh()
         }
         row.findViewById<ImageButton>(R.id.rowDelete).setOnClickListener {
-            confirmDelete(file, isMt, false)
+            confirmDelete(file, isAsr = false)
         }
         parent.addView(row)
     }
@@ -313,14 +466,9 @@ class SettingsActivity : AppCompatActivity() {
                         runOnUiThread { setProgress(done, total) }
                     }
                 }
-                // si no habia modelo activo, activamos el recien descargado
-                val isMt = spec.id == ModelManager.MT.id
-                if (isMt) {
-                    if (ModelPrefs.activeMtPath(this@SettingsActivity) == null) {
-                        ModelPrefs.setActiveMt(this@SettingsActivity, ModelManager.fileFor(this@SettingsActivity, spec))
-                    }
-                } else {
-                    if (ModelPrefs.activeAsrPath(this@SettingsActivity) == null && spec.id != ModelManager.VAD.id) {
+                // si no habia modelo activo, activamos el recien descargado (solo ASR)
+                if (spec.id != ModelManager.VAD.id && ModelManager.WHISPER_DOWNLOADS.any { it.id == spec.id }) {
+                    if (ModelPrefs.activeAsrPath(this@SettingsActivity) == null) {
                         ModelPrefs.setActiveAsr(this@SettingsActivity, ModelManager.fileFor(this@SettingsActivity, spec))
                     }
                 }
@@ -334,7 +482,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun importUri(uri: android.net.Uri, subdir: String, exts: List<String>, isMt: Boolean) {
+    private fun importUri(uri: android.net.Uri, subdir: String, exts: List<String>) {
         val name = ModelManager.displayName(this, uri)
         val ext = name.substringAfterLast('.', "").lowercase()
         if (ext.isNotEmpty() && !exts.contains(ext)) {
@@ -349,8 +497,7 @@ class SettingsActivity : AppCompatActivity() {
                         runOnUiThread { setProgress(done, total) }
                     }
                 }
-                if (isMt) ModelPrefs.setActiveMt(this@SettingsActivity, dest)
-                else ModelPrefs.setActiveAsr(this@SettingsActivity, dest)
+                ModelPrefs.setActiveAsr(this@SettingsActivity, dest)
                 setStatus("Importado y activado: ${dest.name}")
             } catch (t: Throwable) {
                 setStatus("Error importando: ${t.message}")
@@ -361,14 +508,13 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun confirmDelete(file: File, isMt: Boolean, isAsr: Boolean) {
+    private fun confirmDelete(file: File, isAsr: Boolean) {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.settings_delete)
             .setMessage(file.name)
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.settings_delete) { _, _ ->
                 ModelManager.delete(file)
-                if (ModelPrefs.activeMtPath(this) == file.absolutePath) ModelPrefs.clearActiveMt(this)
                 if (ModelPrefs.activeAsrPath(this) == file.absolutePath) ModelPrefs.clearActiveAsr(this)
                 refresh()
             }

@@ -106,7 +106,7 @@ class CoreTest {
 
     @Test
     fun modelSpecs_tienen_url_https() {
-        val all = ModelManager.WHISPER_DOWNLOADS + ModelManager.MT_DOWNLOADS + listOf(ModelManager.VAD)
+        val all = ModelManager.WHISPER_DOWNLOADS + NllbModels.ALL + listOf(ModelManager.VAD)
         for (spec in all) {
             assertTrue(spec.url.startsWith("https://"))
             assertFalse(spec.fileName.isBlank())
@@ -628,18 +628,6 @@ class CoreTest {
             texto.split(Regex("\\s+")),
             TextChunker.recompose(chunks).split(Regex("\\s+"))
         )
-    }
-
-    // ---------------- Presupuesto de tokens por trozo ----------------
-
-    @Test
-    fun maxTokensFor_es_dinamico_y_acotado() {
-        assertEquals(192, TranslationPipeline.maxTokensFor("")            ) // suelo
-        assertEquals(192, TranslationPipeline.maxTokensFor("x".repeat(100))) // 50 -> suelo
-        assertEquals(300, TranslationPipeline.maxTokensFor("x".repeat(600))) // 300
-        assertEquals(600, TranslationPipeline.maxTokensFor("x".repeat(1200))) // 600
-        // Tope 768 aunque el trozo sea enorme.
-        assertEquals(768, TranslationPipeline.maxTokensFor("x".repeat(9000)))
     }
 
     @Test
