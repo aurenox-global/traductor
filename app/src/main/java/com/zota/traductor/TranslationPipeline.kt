@@ -154,35 +154,96 @@ class TranslationPipeline(
 
             cancelRequested.set(false)
             lastCancelled = false
+            untranslatedChunks = 0
 
-            val system = Prompts.systemPrompt(target, source)
             val chunks = TextChunker.chunk(input, MAX_CHARS_PER_CHUNK)
 
-            // Caso normal y corto: un único trozo (comportamiento previo intacto).
+            // Caso corto de una sola línea: comportamiento previo + anti-eco.
             if (chunks.size <= 1) {
                 val one = chunks.firstOrNull() ?: input
                 cb.onStatus("Traduciendo…")
-                val out = withContext(Dispatchers.Default) {
-                    LlamaBridge.nativeGenerate(
-                        llamaHandle, system, Prompts.userPrompt(one), maxTokensFor(one), null
-                    )
-                }
-                return@withLock Prompts.cleanOutput(out)
+                return@withLock translateChunk(one, source, target, 1, 1)
             }
 
             val parts = ArrayList<String>(chunks.size)
             for ((i, chunk) in chunks.withIndex()) {
                 if (cancelRequested.get()) { lastCancelled = true; break }
                 cb.onStatus("Traduciendo trozo ${i + 1}/${chunks.size}…")
-                val out = withContext(Dispatchers.Default) {
-                    LlamaBridge.nativeGenerate(
-                        llamaHandle, system, Prompts.userPrompt(chunk), maxTokensFor(chunk), null
-                    )
-                }
-                parts.add(Prompts.cleanOutput(out))
+                parts.add(translateChunk(chunk, source, target, i + 1, chunks.size))
             }
             parts.filter { it.isNotBlank() }.joinToString("\n")
         }
+    }
+
+    /**
+     * Nº de trozos que quedaron marcados como NO traducidos (eco persistente).
+     * La UI lo usa para avisar. Se resetea en cada [translateText].
+     */
+    @Volatile var untranslatedChunks: Int = 0
+        private set
+
+    private suspend fun generate(system: String, chunk: String): String =
+        withContext(Dispatchers.Default) {
+            Prompts.cleanOutput(
+                LlamaBridge.nativeGenerate(
+                    llamaHandle, system, Prompts.userPrompt(chunk), maxTokensFor(chunk), null
+                )
+            )
+        }
+
+    /**
+     * Traduce un trozo con detección de ECO y reintentos (v0.9.3):
+     *   1) prompt normal;
+     *   2) si el modelo copia, prompt "tajante" (no copiar aunque parezca orden);
+     *   3) si sigue copiando, granularidad MENOR (líneas -> frases);
+     *   4) si aún copia, se deja el original con el marcador [Prompts.UNTRANSLATED_MARKER]
+     *      (nunca se hace pasar el original por traducción) + aviso de estado.
+     *
+     * Solo se comprueba el eco cuando el idioma origen != destino (o es AUTO).
+     */
+    private suspend fun translateChunk(
+        chunk: String, source: String, target: String, idx: Int, total: Int
+    ): String {
+        val checkEcho = source == Languages.AUTO.code || source != target
+        if (!checkEcho) return generate(Prompts.systemPrompt(target, source), chunk)
+
+        val system = Prompts.systemPrompt(target, source)
+        var out = generate(system, chunk)
+        if (!Prompts.isEcho(chunk, out)) return out
+        if (cancelRequested.get()) return out
+
+        // Reintento 1: prompt tajante.
+        cb.onStatus("Reintentando trozo ${idx}/${total} (no copiar)…")
+        val strict = generate(Prompts.strictSystemPrompt(target, source), chunk)
+        if (!Prompts.isEcho(chunk, strict)) return strict
+
+        // Reintento 2: granularidad menor (líneas -> frases) con prompt tajante.
+        val units = TextChunker.retryUnits(chunk, MAX_CHARS_PER_CHUNK)
+        if (units.size > 1) {
+            cb.onStatus("Reintentando trozo ${idx}/${total} por frases…")
+            val strictSystem = Prompts.strictSystemPrompt(target, source)
+            val sub = ArrayList<String>(units.size)
+            var echoedUnits = 0
+            for (u in units) {
+                if (cancelRequested.get()) break
+                val t = generate(strictSystem, u)
+                if (Prompts.isEcho(u, t)) {
+                    sub.add("${Prompts.UNTRANSLATED_MARKER} $u")
+                    echoedUnits++
+                } else {
+                    sub.add(t)
+                }
+            }
+            if (echoedUnits < units.size) {
+                untranslatedChunks += echoedUnits
+                return sub.joinToString("\n")
+            }
+        }
+
+        // Eco persistente: dejamos el original MARCADO (no como traducción).
+        untranslatedChunks++
+        cb.onStatus("No se pudo traducir un trozo (${idx}/${total})")
+        return "${Prompts.UNTRANSLATED_MARKER} $chunk"
     }
 
     /** Pide cancelar la traducción en curso (troceada o de un solo bloque). */

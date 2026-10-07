@@ -258,7 +258,12 @@ class MainActivity : AppCompatActivity(), TranslationPipeline.Callbacks {
                         HistEntry(text, translated, source.code, target.code, System.currentTimeMillis())
                     )
                     if (b.switchAutoTts.isChecked) tts.speak(translated, Languages.localeTag(target.code))
-                    setStatus(getString(R.string.status_idle))
+                    val pending = pipeline.untranslatedChunks
+                    if (pending > 0) {
+                        setStatus("No se pudo traducir $pending trozo(s) (eco del modelo; marcados)")
+                    } else {
+                        setStatus(getString(R.string.status_idle))
+                    }
                 }
                 else -> setStatus("Sin salida del modelo")
             }
