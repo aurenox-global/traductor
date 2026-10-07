@@ -182,14 +182,18 @@ class TranslationPipeline(
     @Volatile var untranslatedChunks: Int = 0
         private set
 
-    private suspend fun generate(system: String, chunk: String): String =
+    private suspend fun generate(system: String, user: String, src: String): String =
         withContext(Dispatchers.Default) {
             Prompts.cleanOutput(
                 LlamaBridge.nativeGenerate(
-                    llamaHandle, system, Prompts.userPrompt(chunk), maxTokensFor(chunk), null
+                    llamaHandle, system, user, maxTokensFor(src), null
                 )
             )
         }
+
+    /** ¿La salida es inservible (vacía, eco del texto o eco del propio prompt)? */
+    private fun bad(out: String, src: String): Boolean =
+        out.isBlank() || Prompts.looksLikeInstructionEcho(out) || Prompts.isEcho(src, out)
 
     /**
      * Traduce un trozo con detección de ECO y reintentos (v0.9.3):
@@ -205,29 +209,29 @@ class TranslationPipeline(
         chunk: String, source: String, target: String, idx: Int, total: Int
     ): String {
         val checkEcho = source == Languages.AUTO.code || source != target
-        if (!checkEcho) return generate(Prompts.systemPrompt(target, source), chunk)
-
         val system = Prompts.systemPrompt(target, source)
-        var out = generate(system, chunk)
-        if (!Prompts.isEcho(chunk, out)) return out
+        if (!checkEcho) return generate(system, Prompts.userPrompt(chunk, target, source), chunk)
+
+        var out = generate(system, Prompts.userPrompt(chunk, target, source), chunk)
+        if (!bad(out, chunk)) return out
         if (cancelRequested.get()) return out
 
         // Reintento 1: prompt tajante.
         cb.onStatus("Reintentando trozo ${idx}/${total} (no copiar)…")
-        val strict = generate(Prompts.strictSystemPrompt(target, source), chunk)
-        if (!Prompts.isEcho(chunk, strict)) return strict
+        val strictSystem = Prompts.strictSystemPrompt(target, source)
+        val strict = generate(strictSystem, Prompts.userPrompt(chunk, target, source), chunk)
+        if (!bad(strict, chunk)) return strict
 
         // Reintento 2: granularidad menor (líneas -> frases) con prompt tajante.
         val units = TextChunker.retryUnits(chunk, MAX_CHARS_PER_CHUNK)
         if (units.size > 1) {
             cb.onStatus("Reintentando trozo ${idx}/${total} por frases…")
-            val strictSystem = Prompts.strictSystemPrompt(target, source)
             val sub = ArrayList<String>(units.size)
             var echoedUnits = 0
             for (u in units) {
                 if (cancelRequested.get()) break
-                val t = generate(strictSystem, u)
-                if (Prompts.isEcho(u, t)) {
+                val t = generate(strictSystem, Prompts.userPrompt(u, target, source), u)
+                if (bad(t, u)) {
                     sub.add("${Prompts.UNTRANSLATED_MARKER} $u")
                     echoedUnits++
                 } else {
@@ -357,7 +361,7 @@ class TranslationPipeline(
                     } else sourceLang
 
                     val system = Prompts.systemPrompt(targetLang, effectiveSource)
-                    val user = Prompts.userPrompt(original)
+                    val user = Prompts.userPrompt(original, targetLang, effectiveSource)
 
                     val acc = StringBuilder()
                     var lastEmit = 0L

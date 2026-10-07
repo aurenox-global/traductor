@@ -25,24 +25,24 @@ class CoreTest {
     }
 
     @Test
-    fun systemPrompt_incluye_destino() {
-        assertTrue(Prompts.systemPrompt("es").contains("español"))
-        assertTrue(Prompts.systemPrompt("ja").contains("japonés"))
+    fun systemPrompt_es_minimo() {
+        // v0.9.4: el system es MINIMO (el 0.8B copiaba el prompt largo).
+        assertEquals("Eres un traductor.", Prompts.systemPrompt("es"))
+        assertEquals("Eres un traductor.", Prompts.systemPrompt("ja", "es"))
     }
 
     @Test
-    fun systemPrompt_incluye_origen_y_destino() {
-        val p = Prompts.systemPrompt("en", "es")
-        assertTrue("deberia indicar origen: $p", p.contains("español"))
-        assertTrue("deberia indicar destino: $p", p.contains("inglés"))
-        assertTrue("deberia ser 'del ... al ...'", p.contains("Traduce del"))
+    fun userPrompt_incluye_destino_y_texto() {
+        val p = Prompts.userPrompt("Hallo", "es")
+        assertTrue("deberia indicar destino: $p", p.contains("español"))
+        assertTrue("deberia incluir el texto: $p", p.contains("Hallo"))
+        assertTrue("deberia pedir la traduccion: $p", p.contains("Traduce el texto anterior"))
     }
 
     @Test
-    fun systemPrompt_auto_pide_detectar() {
-        val p = Prompts.systemPrompt("en", "auto")
-        assertTrue("deberia pedir deteccion: $p", p.contains("Detecta el idioma"))
-        assertTrue(p.contains("inglés"))
+    fun userPrompt_acepta_auto_y_origen() {
+        assertTrue(Prompts.userPrompt("Hallo", "en", "auto").contains("inglés"))
+        assertTrue(Prompts.userPrompt("Hola", "en", "es").contains("inglés"))
     }
 
     @Test
