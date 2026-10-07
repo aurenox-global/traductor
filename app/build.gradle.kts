@@ -27,8 +27,8 @@ android {
         applicationId = "com.zota.traductor"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.9.4"
+        versionCode = 14
+        versionName = "0.9.5"
 
         ndk {
             // arm64-v8a principal (OnePlus PLB110).

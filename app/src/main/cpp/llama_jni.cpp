@@ -230,6 +230,12 @@ Java_com_zota_traductor_LlamaBridge_nativeGenerate(
     }
 
     llama_sampler * smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
+    // Penalizacion de repeticion (v0.9.5): con greedy puro el modelo entra en
+    // bucles degenerados en algunos idiomas (hindi "पक्की पक्की...", hungaro
+    // "aha aha...", hebreo "אהו..."). 1.15 sobre los ultimos 64 tokens los corta
+    // sin perdida apreciable de calidad (verificado con el modelo real).
+    llama_sampler_chain_add(smpl, llama_sampler_init_penalties(
+        llama_vocab_n_tokens(e->vocab), 64, 1.15f, 0.0f, 0.0f));
     llama_sampler_chain_add(smpl, llama_sampler_init_greedy());
 
     // --- 4. bucle de generacion ---
