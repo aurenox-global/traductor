@@ -4,12 +4,13 @@ package com.zota.traductor
  * Divide un texto en trozos ("chunks") que quepan holgados en el contexto del
  * modelo.
  *
- * v0.9.3: el troceo ahora es **por LÍNEAS primero**. Cada línea no vacía es una
- * unidad; solo se AGRUPAN líneas cortas entre sí mientras el conjunto no supere
- * [LINE_GROUP_LIMIT] (~220 chars). Una línea más larga que el presupuesto se
- * parte por FRASES y, si una frase no cabe, por palabras. Esto es clave para
- * bloques "tipo prompt/instrucción" en MAYÚSCULAS y varias líneas: el 0.8B copia
- * el bloque entero, pero traduce bien línea a línea.
+ * v0.9.6: el troceo es **por PÁRRAFOS** (separados por línea en blanco). Un
+ * párrafo que no cabe se parte por FRASES y, si una frase no cabe, por palabras.
+ *
+ * IMPORTANTE: NO se parte por líneas simples. La v0.9.3 lo hacía y **rompía las
+ * listas**: las líneas cortadas ("control plate", "monitor") se perdían y el
+ * modelo renumeraba los ítems. Como el prompt ya evita el eco, no hace falta
+ * esa granularidad para trocear (sí se usa, en [retryUnits], para el reintento).
  *
  * Nunca corta a mitad de palabra (salvo el caso patológico de una única palabra
  * más larga que el presupuesto, que se parte por necesidad). La recomposición
@@ -21,13 +22,6 @@ object TextChunker {
 
     /** Presupuesto por defecto por trozo, en caracteres. */
     const val DEFAULT_MAX_CHARS: Int = 1200
-
-    /**
-     * Tope para AGRUPAR líneas cortas distintas en un mismo trozo. Por encima de
-     * esto, cada línea arranca un trozo nuevo (que es el modo que el modelo sí
-     * traduce bien en bloques tipo instrucción).
-     */
-    const val LINE_GROUP_LIMIT: Int = 220
 
     /** Fin de frase: punto, exclamación, interrogación, puntos suspensivos (ASCII y CJK). */
     private val SENTENCE_SPLIT = Regex("(?<=[.!?…。！？])\\s+")
@@ -47,52 +41,41 @@ object TextChunker {
      * - Los trozos se recortan (sin espacios sobrantes en los bordes).
      * - El texto vacío devuelve lista vacía.
      */
-    fun chunk(
-        text: String,
-        maxChars: Int = DEFAULT_MAX_CHARS,
-        lineGroupLimit: Int = LINE_GROUP_LIMIT
-    ): List<String> {
+    /**
+     * Parte [text] en trozos de longitud <= [maxChars].
+     *
+     * - Texto que ya cabe -> lista con el texto idéntico (caso corto intacto).
+     * - Varios párrafos -> se agrupan hasta [maxChars]; un párrafo demasiado
+     *   largo se parte por frases (y por palabras si una frase no cabe).
+     * - Nunca se corta a mitad de palabra. [recompose] une con "\n".
+     * - El texto vacío devuelve lista vacía.
+     */
+    fun chunk(text: String, maxChars: Int = DEFAULT_MAX_CHARS): List<String> {
         require(maxChars >= 1) { "maxChars debe ser >= 1" }
         if (text.isEmpty()) return emptyList()
-        // Atajo: una sola línea que cabe -> sin cambios (no rompe el caso corto).
-        if (!text.contains('\n') && text.length <= maxChars) return listOf(text)
+        if (text.length <= maxChars) return listOf(text)
 
-        val blocks = ArrayList<Block>()
-        var lineId = 0
-        for (rawLine in text.split("\n")) {
-            val line = rawLine.trim()
-            if (line.isEmpty()) continue
-            val sep = if (blocks.isEmpty()) "" else "\n"
-            appendUnits(blocks, line, sep, maxChars, lineId)
-            lineId++
-        }
-
-        // Empaquetado: dentro de una misma línea se llega hasta maxChars (las
-        // frases de una línea larga son del mismo bloque semántico). Entre
-        // líneas distintas solo se agrupa mientras quepa en lineGroupLimit.
-        val groupLimit = minOf(lineGroupLimit, maxChars)
+        val paraSplit = Regex("\\n[ \\t]*\\n")
         val chunks = ArrayList<String>()
         val sb = StringBuilder()
-        var currentLine = -1
-        for (block in blocks) {
-            val piece = block.text.trim()
-            if (piece.isEmpty()) continue
-            if (sb.isEmpty()) {
-                sb.append(piece)
-                currentLine = block.lineId
-                continue
+        for (rawPara in text.split(paraSplit)) {
+            val para = rawPara.trim()
+            if (para.isEmpty()) continue
+            val units: List<String> = if (para.length <= maxChars) listOf(para)
+            else splitSentences(para).flatMap { s ->
+                if (s.length <= maxChars) listOf(s) else splitByWords(s, maxChars)
             }
-            val sep = block.sepBefore.ifEmpty { " " }
-            val sameLine = block.lineId == currentLine
-            val limit = if (sameLine) maxChars else groupLimit
-            if (sb.length + sep.length + piece.length <= limit) {
-                sb.append(sep).append(piece)
-            } else {
-                chunks.add(sb.toString())
-                sb.setLength(0)
-                sb.append(piece)
+            for (u in units) {
+                if (sb.isEmpty()) {
+                    sb.append(u)
+                } else if (sb.length + 2 + u.length <= maxChars) {
+                    sb.append("\n\n").append(u)
+                } else {
+                    chunks.add(sb.toString())
+                    sb.setLength(0)
+                    sb.append(u)
+                }
             }
-            currentLine = block.lineId
         }
         if (sb.isNotEmpty()) chunks.add(sb.toString())
         return chunks
