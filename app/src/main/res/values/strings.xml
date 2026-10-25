@@ -110,4 +110,9 @@
     <string name="settings_diag_title">Diagnóstico offline</string>
     <string name="settings_diag_desc">Resultado del copiado de los modelos incluidos en la APK. Se guarda en el dispositivo y no se pisa con el estado de las descargas.</string>
     <string name="settings_diag_refresh">Actualizar diagnóstico</string>
+
+    <!-- ColorOS UI -->
+    <string name="tagline">Offline · texto, voz y fotos</string>
+    <string name="input_label">TEXTO</string>
+    <string name="output_label">TRADUCCIÓN</string>
 </resources>

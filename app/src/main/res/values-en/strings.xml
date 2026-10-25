@@ -105,4 +105,9 @@
     <string name="settings_credit">Created by %1$s · Cuba</string>
     <string name="settings_credit_author">Andres Mag</string>
     <string name="settings_footer_note">100% offline · the first download needs a connection</string>
+
+    <!-- ColorOS UI -->
+    <string name="tagline">Offline · text, voice and photos</string>
+    <string name="input_label">TEXT</string>
+    <string name="output_label">TRANSLATION</string>
 </resources>

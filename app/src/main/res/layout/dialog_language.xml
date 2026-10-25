@@ -9,10 +9,14 @@
         android:id="@+id/editLanguageSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/pill_lang"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
         android:hint="@string/lang_search_hint"
         android:inputType="text"
         android:imeOptions="actionSearch|flagNoExtractUi"
         android:maxLines="1"
+        android:textSize="15sp"
         android:textColor="@color/on_panel"
         android:textColorHint="@color/muted" />
 
@@ -20,6 +24,8 @@
         android:id="@+id/listLanguages"
         android:layout_width="match_parent"
         android:layout_height="360dp"
+        android:layout_marginTop="6dp"
         android:divider="@null"
-        android:dividerHeight="0dp" />
+        android:dividerHeight="0dp"
+        android:scrollbars="none" />
 </LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botón principal con degradado aqua -> azul (ColorOS 17). -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="@color/accent"
+                android:endColor="@color/accent2" />
+            <stroke android:width="1dp" android:color="#33FFFFFF" />
+        </shape>
+    </item>
+</ripple>

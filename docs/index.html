@@ -6,171 +6,320 @@
 <title>Traductor · 100% offline · Offline translator for Android</title>
 <meta name="description" content="Traductor — traductor de texto, voz y fotos 100% offline para Android, con LLM, Whisper, VAD, OCR y TTS locales. / Fully offline text, voice and photo translator for Android." />
 <link rel="icon" href="icon.png" />
-<meta name="theme-color" content="#0A84FF" />
+<meta name="theme-color" content="#00A98F" />
 <style>
   :root {
-    --blue: #0a84ff;
-    --blue-2: #4fa8ff;
-    --blue-deep: #0a6fd8;
-    --radius: 18px;
-    --maxw: 940px;
-    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    /* ColorOS 17 · Aquamorphic */
+    --accent: #00a98f;
+    --accent-2: #2f8bff;
+    --accent-soft: rgba(0, 169, 143, .12);
+    --grad: linear-gradient(135deg, #00c2a8 0%, #2f8bff 100%);
+    --radius: 28px;
+    --radius-sm: 20px;
+    --maxw: 980px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --shadow: 0 10px 30px rgba(10, 132, 255, .18);
-    --bg: #f5f7fb;
-    --bg-2: #ffffff;
-    --card: #ffffff;
-    --text: #101827;
-    --muted: #5a6472;
-    --border: #e3e8f0;
-    --code-bg: #0f1724;
-    --code-fg: #d7e3f4;
+    --bg: #eef7fd;
+    --bg-2: #e4f9f3;
+    --text: #0c1a26;
+    --muted: #5c6c7c;
+    --glass: rgba(255, 255, 255, .62);
+    --glass-strong: rgba(255, 255, 255, .82);
+    --stroke: rgba(255, 255, 255, .78);
+    --stroke-soft: rgba(12, 26, 38, .08);
+    --shadow: 0 26px 60px -30px rgba(8, 74, 104, .45);
+    --shadow-soft: 0 10px 30px -18px rgba(8, 74, 104, .4);
+    --code-bg: #0b1721;
+    --code-fg: #cfe0f5;
+    --heart: #ff5a7a;
   }
   html[data-theme="dark"] {
-    --bg: #0f1115;
-    --bg-2: #141821;
-    --card: #1b1f26;
-    --text: #e6e8eb;
-    --muted: #9aa0a6;
-    --border: #2b313b;
-    --code-bg: #0a0d13;
-    --code-fg: #cfe0f5;
-    --shadow: 0 12px 34px rgba(0, 0, 0, .45);
+    --accent: #3ee0c0;
+    --accent-2: #6fa8ff;
+    --accent-soft: rgba(62, 224, 192, .16);
+    --bg: #071420;
+    --bg-2: #0a121f;
+    --text: #eaf4fa;
+    --muted: #93a6b5;
+    --glass: rgba(23, 40, 52, .55);
+    --glass-strong: rgba(23, 40, 52, .82);
+    --stroke: rgba(255, 255, 255, .14);
+    --stroke-soft: rgba(255, 255, 255, .08);
+    --shadow: 0 30px 70px -34px rgba(0, 0, 0, .85);
+    --shadow-soft: 0 14px 34px -20px rgba(0, 0, 0, .8);
+    --code-bg: #050d15;
+    --code-fg: #d7e6f5;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  html {
+    scroll-behavior: smooth;
+    background:
+      radial-gradient(60vw 60vw at 88% -8%, rgba(47, 139, 255, .30), transparent 62%),
+      radial-gradient(55vw 55vw at 4% 100%, rgba(0, 214, 168, .28), transparent 64%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+    background-attachment: fixed;
+  }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
+    margin: 0; color: var(--text);
     font-family: var(--font); line-height: 1.65;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  a { color: var(--blue); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
   .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
 
-  /* ---------- top bar ---------- */
+  /* ---------- top bar flotante ---------- */
   header.top {
-    position: sticky; top: 0; z-index: 20;
-    backdrop-filter: saturate(180%) blur(14px);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    border-bottom: 1px solid var(--border);
+    position: sticky; top: 12px; z-index: 30;
+    padding: 0 14px;
   }
-  .top .wrap { display: flex; align-items: center; gap: 12px; height: 62px; }
-  .top img { width: 30px; height: 30px; border-radius: 8px; }
-  .top .brand { font-weight: 700; letter-spacing: -.2px; }
+  .top .wrap {
+    display: flex; align-items: center; gap: 12px; height: 60px;
+    padding: 0 16px; max-width: var(--maxw);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    backdrop-filter: blur(26px) saturate(160%);
+    border: 1px solid var(--stroke);
+    border-radius: 999px;
+    box-shadow: var(--shadow-soft);
+  }
+  .top img { width: 30px; height: 30px; border-radius: 9px; }
+  .top .brand { font-weight: 800; letter-spacing: -.02em; }
   .top .spacer { flex: 1; }
-  .switch { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+  .switch {
+    display: inline-flex; padding: 3px; gap: 2px;
+    border: 1px solid var(--stroke); border-radius: 999px;
+    background: var(--glass-strong);
+  }
   .switch button {
     border: 0; background: transparent; color: var(--muted); cursor: pointer;
-    padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 600;
+    padding: 5px 12px; font: inherit; font-size: 12.5px; font-weight: 700;
+    border-radius: 999px; transition: background .18s ease, color .18s ease;
   }
-  .switch button[aria-pressed="true"] { background: var(--blue); color: #fff; }
+  .switch button[aria-pressed="true"] { background: var(--grad); color: #fff; }
   #themeBtn {
-    border: 1px solid var(--border); background: transparent; color: var(--text);
-    border-radius: 999px; cursor: pointer; width: 38px; height: 34px; font-size: 15px;
+    display: grid; place-items: center;
+    border: 1px solid var(--stroke); background: var(--glass-strong); color: var(--text);
+    border-radius: 999px; cursor: pointer; width: 38px; height: 38px;
   }
+  #themeBtn svg { width: 18px; height: 18px; }
+  #themeBtn:hover { background: var(--accent-soft); color: var(--accent); }
 
   /* ---------- hero ---------- */
-  .hero { text-align: center; padding: 64px 0 26px; }
+  .hero { text-align: center; padding: 66px 0 22px; }
   .hero .appicon {
-    width: 132px; height: 132px; border-radius: 30px; box-shadow: var(--shadow);
+    width: 124px; height: 124px; border-radius: 34px;
+    box-shadow:
+      0 30px 60px -22px rgba(0, 169, 143, .55),
+      0 0 0 1px rgba(255, 255, 255, .55) inset,
+      0 0 0 8px rgba(255, 255, 255, .22);
   }
-  .hero h1 { font-size: clamp(30px, 6vw, 46px); margin: 22px 0 6px; letter-spacing: -.03em; }
-  .hero p.tag { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); margin: 0 auto; max-width: 640px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 52px); margin: 24px 0 8px;
+    letter-spacing: -.045em; font-weight: 800; line-height: 1.05;
+  }
+  .hero p.tag {
+    font-size: clamp(16px, 2.4vw, 19px); color: var(--muted);
+    margin: 0 auto; max-width: 640px;
+  }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 24px; }
   .badge {
-    font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px;
-    background: color-mix(in srgb, var(--blue) 14%, transparent);
-    color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 650; padding: 7px 14px; border-radius: 999px;
+    background: var(--glass); color: var(--text);
+    border: 1px solid var(--stroke);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    box-shadow: 0 6px 18px -14px rgba(8, 74, 104, .5);
+  }
+  .badge::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--grad); box-shadow: 0 0 8px rgba(0, 194, 168, .8);
   }
 
   /* ---------- nav ---------- */
-  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 22px 0 8px; }
+  nav.toc {
+    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+    padding: 8px; margin: 26px auto 4px; width: fit-content; max-width: calc(100% - 32px);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--stroke); border-radius: 999px;
+    box-shadow: var(--shadow-soft);
+  }
   nav.toc a {
-    font-size: 13px; color: var(--muted); border: 1px solid var(--border);
-    padding: 5px 11px; border-radius: 999px; background: var(--card);
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    padding: 7px 14px; border-radius: 999px;
+    transition: background .18s ease, color .18s ease;
   }
-  nav.toc a:hover { color: var(--blue); border-color: var(--blue); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); background: var(--accent-soft); text-decoration: none; }
 
-  /* ---------- sections ---------- */
-  section { padding: 34px 0; }
-  h2 { font-size: 25px; letter-spacing: -.02em; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
-  h2::before { content: ""; width: 6px; height: 22px; border-radius: 3px; background: linear-gradient(var(--blue-2), var(--blue-deep)); }
-  .lead { color: var(--muted); margin: 0 0 16px; }
-  h3 { font-size: 17px; margin: 22px 0 6px; }
+  /* ---------- secciones ---------- */
+  section { padding: 46px 0; }
+  h2 {
+    font-size: clamp(23px, 3.4vw, 28px); font-weight: 800; letter-spacing: -.03em;
+    margin: 0 0 10px; display: flex; align-items: center; gap: 12px;
+  }
+  h2::before {
+    content: ""; width: 5px; height: 26px; border-radius: 999px;
+    background: var(--grad); box-shadow: 0 4px 14px -2px rgba(0, 194, 168, .65);
+  }
+  .lead { color: var(--muted); font-size: 17px; margin: 0 0 18px; }
+  h3 { font-size: 17px; letter-spacing: -.01em; margin: 0; }
   p { margin: 8px 0; }
+  p, li, td, th, .card p { overflow-wrap: anywhere; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; align-items: start; }
   .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 16px 18px;
+    position: relative;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    padding: 20px 20px 18px;
+    box-shadow: var(--shadow-soft);
+    transition: transform .22s ease, box-shadow .22s ease, background .22s ease;
   }
-  .card .ico { font-size: 22px; }
-  .card h3 { margin: 8px 0 4px; font-size: 15.5px; }
-  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+    background: var(--glass-strong);
+  }
+  .card .ico {
+    width: 44px; height: 44px; border-radius: 15px;
+    display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .card .ico svg { width: 22px; height: 22px; }
+  .card p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
 
-  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 14px 0 0; }
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 18px 0 0; }
   ol.steps li {
-    position: relative; padding: 12px 16px 12px 56px; margin: 10px 0;
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    position: relative; padding: 16px 20px 16px 64px; margin: 10px 0;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-soft);
   }
   ol.steps li::before {
     counter-increment: s; content: counter(s);
-    position: absolute; left: 14px; top: 12px;
-    width: 28px; height: 28px; border-radius: 50%;
+    position: absolute; left: 16px; top: 14px;
+    width: 32px; height: 32px; border-radius: 50%;
     display: grid; place-items: center;
-    background: linear-gradient(var(--blue-2), var(--blue-deep)); color: #fff;
-    font-weight: 700; font-size: 14px;
+    background: var(--grad); color: #fff;
+    font-weight: 800; font-size: 14px;
+    box-shadow: 0 8px 18px -8px rgba(0, 169, 143, .75);
   }
   ol.steps b { color: var(--text); }
 
   pre {
-    background: var(--code-bg); color: var(--code-fg); padding: 16px 18px;
-    border-radius: 14px; overflow-x: auto; font-family: var(--mono);
-    font-size: 13px; line-height: 1.55; margin: 12px 0;
+    max-width: 100%;
+    background: var(--code-bg); color: var(--code-fg);
+    padding: 18px 20px; border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, .08);
+    overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.6; margin: 16px 0;
+    box-shadow: var(--shadow);
   }
   code { font-family: var(--mono); font-size: .92em; }
   p code, li code, td code {
-    background: color-mix(in srgb, var(--blue) 12%, transparent);
-    color: var(--blue); padding: 1px 6px; border-radius: 6px;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 2px 7px; border-radius: 8px;
   }
 
-  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14.5px; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0 6px; margin-top: 14px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 12px 16px; overflow-wrap: anywhere; }
+  th {
+    color: var(--muted); font-weight: 700; font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: .1em; padding-bottom: 6px;
+  }
+  td {
+    background: var(--glass);
+    border-top: 1px solid var(--stroke); border-bottom: 1px solid var(--stroke);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  }
+  tr td:first-child { border-left: 1px solid var(--stroke); border-radius: 16px 0 0 16px; font-weight: 600; }
+  tr td:last-child { border-right: 1px solid var(--stroke); border-radius: 0 16px 16px 0; }
+  tbody tr, table tr { transition: transform .18s ease; }
 
   .note {
-    border-left: 4px solid var(--blue); background: color-mix(in srgb, var(--blue) 9%, transparent);
-    padding: 12px 16px; border-radius: 0 12px 12px 0; margin: 14px 0; font-size: 14.5px;
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--accent-soft);
+    border: 1px solid rgba(0, 169, 143, .22);
+    padding: 15px 18px; border-radius: var(--radius-sm); margin: 18px 0;
+    font-size: 14.5px;
   }
-  .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+  .note svg { width: 20px; height: 20px; flex: none; color: var(--accent); margin-top: 2px; }
+  .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 14px; }
 
   footer {
-    border-top: 1px solid var(--border); margin-top: 30px; padding: 30px 0 46px;
+    margin-top: 46px; padding: 26px 0 54px;
     text-align: center; color: var(--muted); font-size: 14px;
+    border-top: 1px solid var(--stroke-soft);
   }
-  footer .heart { color: #ff5a7a; }
+  footer .heart { color: var(--heart); display: inline-block; vertical-align: -3px; }
+  footer .heart svg { width: 15px; height: 15px; }
+
   /* La regla NO debe alcanzar al propio <html data-lang=…>, solo a su contenido. */
   body [data-lang] { display: none; }
   html[data-lang="es"] [data-lang="es"], html[data-lang="en"] [data-lang="en"] { display: block; }
   span[data-lang] { display: none; }
   html[data-lang="es"] span[data-lang="es"], html[data-lang="en"] span[data-lang="en"] { display: inline; }
-  @media (max-width: 560px) { .top .brand { display: none; } }
 
-  /* ---------- CTA (descarga / github) ---------- */
-  .cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+  /* ---------- CTA ---------- */
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 28px; }
   .btn {
     display: inline-flex; align-items: center; gap: 9px;
-    padding: 12px 22px; border-radius: 999px; font-weight: 700; font-size: 15px;
-    border: 1px solid var(--border); color: var(--text); background: var(--card);
-    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 15px;
+    border: 1px solid var(--stroke); color: var(--text);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    box-shadow: var(--shadow-soft);
+    transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
   }
-  .btn:hover { text-decoration: none; transform: translateY(-1px); }
-  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: var(--shadow); }
-  .btn.primary:hover { background: var(--blue-deep); }
+  .btn svg { width: 18px; height: 18px; }
+  .btn:hover { text-decoration: none; transform: translateY(-2px); box-shadow: var(--shadow); }
+  .btn.primary {
+    background: var(--grad); border-color: transparent; color: #fff;
+    box-shadow: 0 18px 40px -16px rgba(0, 169, 143, .75);
+  }
+  .btn.primary:hover { filter: brightness(1.04); }
+
+  @media (max-width: 560px) {
+    .top .brand { display: none; }
+    header.top { top: 8px; }
+    .top .wrap { height: 56px; padding: 0 12px; }
+    .hero { padding-top: 46px; }
+    nav.toc { border-radius: 24px; }
+    th, td { padding: 10px 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 13.5h.01M11 13.5h.01M15 13.5h.01M8 16.5h8"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V22M8.5 22h7"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h2.5L8.5 6h7l2 2.5H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l5-4v13l-5-4H4z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3.5 2"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l7 3v6c0 4.4-2.9 7.6-7 9.4-4.1-1.8-7-5-7-9.4v-6z"/><path d="M8.8 12l2.2 2.2 4.2-4.4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7.5 10l4.5 4.5L16.5 10M4 19.5h16"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l8 4.4v9.6l-8 4.4-8-4.4V7.2z"/><path d="M4 7.2l8 4.4 8-4.4M12 11.6v9.6"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19.5c-4 1.2-4-2-5.5-2.5M15 21.5v-3.3c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.7 4.7 0 0 0-1.3-3.2 4.4 4.4 0 0 0-.1-3.3s-1-.3-3.4 1.3a11.7 11.7 0 0 0-6.4 0C6.4 3.4 5.4 3.7 5.4 3.7a4.4 4.4 0 0 0-.1 3.3A4.7 4.7 0 0 0 4 10.2c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2v3.3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7.5-4.4-7.5-9.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 3.1C19.5 15.6 12 20 12 20z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+</svg>
+
 
 <header class="top">
   <div class="wrap">
@@ -181,7 +330,7 @@
       <button id="lang-es" aria-pressed="true" onclick="setLang('es')">ES</button>
       <button id="lang-en" aria-pressed="false" onclick="setLang('en')">EN</button>
     </span>
-    <button id="themeBtn" title="Tema / Theme" aria-label="Tema / Theme" onclick="toggleTheme()">🌙</button>
+    <button id="themeBtn" title="Tema / Theme" aria-label="Tema / Theme" onclick="toggleTheme()"><svg aria-hidden="true"><use href="#i-moon"/></svg></button>
   </div>
 </header>
 
@@ -200,13 +349,13 @@
   </div>
   <div class="cta">
     <a class="btn primary" href="https://github.com/aurenox-global/traductor/releases/download/v0.9.6/traductor-arm64-debug.apk">
-      ⬇️&nbsp;<span data-lang="es">Descargar APK (63 MB)</span><span data-lang="en">Download APK (63 MB)</span>
+      <svg aria-hidden="true"><use href="#i-download"/></svg><span data-lang="es">Descargar APK (63 MB)</span><span data-lang="en">Download APK (63 MB)</span>
     </a>
     <a class="btn" href="https://github.com/aurenox-global/traductor/releases/download/v0.9.6-full/traductor-full-arm64-debug.apk">
-      📦&nbsp;<span data-lang="es">FULL todo incluido (903 MB)</span><span data-lang="en">FULL all-included (903 MB)</span>
+      <svg aria-hidden="true"><use href="#i-package"/></svg><span data-lang="es">FULL todo incluido (903 MB)</span><span data-lang="en">FULL all-included (903 MB)</span>
     </a>
     <a class="btn" href="https://github.com/aurenox-global/traductor">
-      🐙&nbsp;<span data-lang="es">Ver en GitHub</span><span data-lang="en">View on GitHub</span>
+      <svg aria-hidden="true"><use href="#i-github"/></svg><span data-lang="es">Ver en GitHub</span><span data-lang="en">View on GitHub</span>
     </a>
   </div>
   <p class="tag" style="font-size:14px;margin-top:14px">
@@ -236,43 +385,43 @@
     <p>The AI models are downloaded once (first run, Wi-Fi recommended) and from then on everything —translation, speech recognition, OCR and read-aloud— happens on the phone. You can use it in airplane mode.</p>
   </div>
   <div class="note">
-    <span data-lang="es">🔒 Sin cuentas, sin anuncios, sin analíticas. Tu voz, tus fotos y tus textos no salen del teléfono.</span>
-    <span data-lang="en">🔒 No accounts, no ads, no analytics. Your voice, photos and text never leave the phone.</span>
+    <span data-lang="es">Sin cuentas, sin anuncios, sin analíticas. Tu voz, tus fotos y tus textos no salen del teléfono.</span>
+    <span data-lang="en">No accounts, no ads, no analytics. Your voice, photos and text never leave the phone.</span>
   </div>
 </section>
 
 <section id="features" class="wrap">
   <h2><span data-lang="es">Características</span><span data-lang="en">Features</span></h2>
   <div class="grid">
-    <div class="card"><div class="ico">🌍</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-globe"/></svg></div>
       <h3><span data-lang="es">30+ idiomas</span><span data-lang="en">30+ languages</span></h3>
       <p><span data-lang="es">Detección automática y español, inglés, francés, alemán, italiano, portugués, ruso, chino, japonés, coreano, árabe, hindi, turco, neerlandés, polaco, ucraniano, rumano, búlgaro, húngaro…</span><span data-lang="en">Auto-detect plus Spanish, English, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Dutch, Polish, Ukrainian, Romanian, Bulgarian, Hungarian…</span></p>
     </div>
-    <div class="card"><div class="ico">⌨️</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-keyboard"/></svg></div>
       <h3><span data-lang="es">Traducción de texto</span><span data-lang="en">Text translation</span></h3>
       <p><span data-lang="es">Escribe o pega el texto; la traducción aparece al instante con selector de idioma origen/destino.</span><span data-lang="en">Type or paste text; the translation appears instantly with source/target language selectors.</span></p>
     </div>
-    <div class="card"><div class="ico">🎤</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-mic"/></svg></div>
       <h3><span data-lang="es">Voz a texto</span><span data-lang="en">Speech to text</span></h3>
       <p><span data-lang="es">ASR Whisper + detector de voz (VAD): pulsa el micro, habla con naturalidad y se recorta solo lo que hablas.</span><span data-lang="en">Whisper ASR + voice activity detection (VAD): tap the mic, speak naturally, and only speech is captured.</span></p>
     </div>
-    <div class="card"><div class="ico">📷</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-camera"/></svg></div>
       <h3><span data-lang="es">Fotos (OCR)</span><span data-lang="en">Photos (OCR)</span></h3>
       <p><span data-lang="es">Cámara o galería. El texto se reconoce offline, queda editable y se traduce.</span><span data-lang="en">Camera or gallery. Text is recognized offline, stays editable and gets translated.</span></p>
     </div>
-    <div class="card"><div class="ico">🔊</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-volume"/></svg></div>
       <h3><span data-lang="es">Lectura offline</span><span data-lang="en">Offline read-aloud</span></h3>
       <p><span data-lang="es">Voces neuronales Piper para los 32 idiomas (ES/EN/FR/DE/IT/PT/RU/ZH/JA/KO/AR/HI/TR/NL/PL/UK/RO/BG/HU/SV/DA/FI/NO/CS/EL/HE/FA/ID/VI/TH/BN/CA): femeninas por preferencia, masculinas solo si son la única voz del idioma o todas sus voces son masculinas (AR/TR/BG/RO/DA/FA/FI/HE). Motor del sistema como reserva.</span><span data-lang="en">Piper neural voices for all 32 languages (ES/EN/FR/DE/IT/PT/RU/ZH/JA/KO/AR/HI/TR/NL/PL/UK/RO/BG/HU/SV/DA/FI/NO/CS/EL/HE/FA/ID/VI/TH/BN/CA): female by preference, male only when it's a language's only voice or all its voices are male (AR/TR/BG/RO/DA/FA/FI/HE). System engine as fallback.</span></p>
     </div>
-    <div class="card"><div class="ico">🕘</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-clock"/></svg></div>
       <h3><span data-lang="es">Historial</span><span data-lang="en">History</span></h3>
       <p><span data-lang="es">Tus traducciones se guardan localmente y puedes volver a consultarlas.</span><span data-lang="en">Your translations are stored locally and can be revisited.</span></p>
     </div>
-    <div class="card"><div class="ico">⚙️</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-sliders"/></svg></div>
       <h3><span data-lang="es">Gestor de modelos</span><span data-lang="en">Model manager</span></h3>
       <p><span data-lang="es">Descarga o importa modelos GGUF, Whisper y voces Piper desde Ajustes.</span><span data-lang="en">Download or import GGUF, Whisper models and Piper voices from Settings.</span></p>
     </div>
-    <div class="card"><div class="ico">🔒</div>
+    <div class="card"><div class="ico"><svg aria-hidden="true"><use href="#i-shield"/></svg></div>
       <h3><span data-lang="es">Privacidad total</span><span data-lang="en">Total privacy</span></h3>
       <p><span data-lang="es">Nada sale del teléfono. Sin anuncios, sin analíticas, sin servidores.</span><span data-lang="en">Nothing leaves the phone. No ads, no analytics, no servers.</span></p>
     </div>
@@ -383,7 +532,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
 </section>
 
 <footer class="wrap">
-  <p>Traductor <b>v0.9.0</b> · <span data-lang="es">Hecho con</span><span data-lang="en">Made with</span> <span class="heart">♥</span> <span data-lang="es">en Cuba 🇨🇺 · 100% offline</span><span data-lang="en">in Cuba 🇨🇺 · 100% offline</span></p>
+  <p>Traductor <b>v0.9.0</b> · <span data-lang="es">Hecho con</span><span data-lang="en">Made with</span> <span class="heart"><svg aria-hidden="true"><use href="#i-heart"/></svg></span> <span data-lang="es">en Cuba 🇨🇺 · 100% offline</span><span data-lang="en">in Cuba 🇨🇺 · 100% offline</span></p>
 </footer>
 
 <script>
@@ -400,7 +549,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
     function applyTheme(t) {
       root.setAttribute("data-theme", t);
       var b = document.getElementById("themeBtn");
-      if (b) { b.textContent = t === "dark" ? "☀️" : "🌙"; }
+      if (b) { b.innerHTML = t === "dark" ? '<svg aria-hidden="true"><use href="#i-sun"/></svg>' : '<svg aria-hidden="true"><use href="#i-moon"/></svg>'; }
     }
     window.toggleTheme = function () {
       var t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";

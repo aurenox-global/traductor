@@ -8,8 +8,8 @@ import java.util.Locale
  */
 data class Lang(val code: String, val name: String, val flag: String) {
 
-    /** Etiqueta visible: bandera/emoji + nombre (estilo Google Translate). */
-    val label: String get() = if (flag.isEmpty()) name else "$flag $name"
+    /** Etiqueta visible: solo el nombre (sin emojis de bandera). */
+    val label: String get() = name
 
     /** Nombre normalizado para el prompt del modelo. */
     val promptName: String get() = name.lowercase(Locale.ROOT)

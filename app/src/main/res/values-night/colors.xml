@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ColorOS 17 · Aquamorphic (oscuro) -->
+    <color name="bg">#FF081420</color>
+    <color name="bg_top">#FF081821</color>
+    <color name="bg_bottom">#FF0B1220</color>
+    <color name="glow_a">#3D23E0C0</color>
+    <color name="glow_b">#332F7BFF</color>
+
+    <color name="panel">#B31B2A35</color>
+    <color name="panel_soft">#801B2A35</color>
+    <color name="panel_strong">#F21B2A35</color>
+    <color name="panel_stroke">#33FFFFFF</color>
+    <color name="panel_stroke_soft">#1FFFFFFF</color>
+
+    <color name="accent">#FF3EE0C0</color>
+    <color name="accent2">#FF6FA8FF</color>
+    <color name="accent_dark">#FF23B79B</color>
+    <color name="accent_soft">#263EE0C0</color>
+    <color name="on_panel">#FFEAF4FA</color>
+    <color name="muted">#FF93A6B5</color>
+    <color name="danger">#FFFF6B70</color>
+
+    <color name="pill_bg">#26FFFFFF</color>
+    <color name="pill_bg_active">#333EE0C0</color>
+    <color name="icon_btn_bg">#1FFFFFFF</color>
+
+    <color name="bubble_user">#FF152A38</color>
+    <color name="bubble_translation">#FF12332E</color>
+    <color name="bubble_meta">#FF8EA0AF</color>
+    <color name="ic_background">#FF3EE0C0</color>
+</resources>

@@ -41,12 +41,12 @@ android {
         versionCode = when {
             bundled -> 211
             ocrbundle -> 210
-            else -> 202
+            else -> 203
         }
         versionName = when {
             bundled -> "1.0-nllb-full"
             ocrbundle -> "1.0-nllb-lite"
-            else -> "1.0.2-nllb"
+            else -> "1.1-coloros"
         }
 
         ndk {

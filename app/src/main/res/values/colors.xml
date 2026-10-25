@@ -1,19 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema oscuro por defecto (estilo Google Translate, offline) -->
-    <color name="bg">#FF0F1115</color>
-    <color name="panel">#FF1B1F26</color>
-    <color name="panel_stroke">#FF2B313B</color>
-    <color name="accent">#FF8AB4F8</color>
-    <color name="accent_dark">#FF3B5C8F</color>
-    <color name="on_panel">#FFE6E8EB</color>
-    <color name="muted">#FF9AA0A6</color>
-    <color name="danger">#FFEF6B6B</color>
-    <color name="pill_bg">#FF232A33</color>
-    <color name="pill_bg_active">#FF2E4A73</color>
+    <!-- ColorOS 17 · Aquamorphic (claro) -->
+    <color name="bg">#FFF2F8FD</color>
+    <color name="bg_top">#FFF3F9FF</color>
+    <color name="bg_bottom">#FFE6FAF4</color>
+    <color name="glow_a">#402FD8FF</color>
+    <color name="glow_b">#3300D6A8</color>
 
-    <color name="bubble_user">#FFD6E4FF</color>
-    <color name="bubble_translation">#FFD9F2E0</color>
-    <color name="bubble_meta">#FF666666</color>
-    <color name="ic_background">#FF0A84FF</color>
+    <color name="panel">#C7FFFFFF</color>
+    <color name="panel_soft">#99FFFFFF</color>
+    <color name="panel_strong">#F2FFFFFF</color>
+    <color name="panel_stroke">#99FFFFFF</color>
+    <color name="panel_stroke_soft">#4DFFFFFF</color>
+
+    <color name="accent">#FF00A98F</color>
+    <color name="accent2">#FF2F8BFF</color>
+    <color name="accent_dark">#FF007A67</color>
+    <color name="accent_soft">#1F00A98F</color>
+    <color name="on_panel">#FF0C1A26</color>
+    <color name="muted">#FF5C6C7C</color>
+    <color name="danger">#FFFF5A5F</color>
+
+    <color name="pill_bg">#CCFFFFFF</color>
+    <color name="pill_bg_active">#1F00A98F</color>
+    <color name="icon_btn_bg">#0F0C1A26</color>
+
+    <color name="bubble_user">#FFE6F4FF</color>
+    <color name="bubble_translation">#FFE4FBF3</color>
+    <color name="bubble_meta">#FF6B7A88</color>
+    <color name="ic_background">#FF00A98F</color>
 </resources>

@@ -3,42 +3,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg"
+    android:background="@android:color/transparent"
     android:fitsSystemWindows="true"
-    android:padding="12dp">
+    android:paddingHorizontal="16dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingVertical="4dp">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/history"
-            android:src="@drawable/ic_swap"
+            android:padding="11dp"
             android:rotation="90"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_swap"
             android:tint="@color/on_panel" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="12dp"
             android:text="@string/history"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
+            android:letterSpacing="-0.02"
             android:textColor="@color/on_panel" />
 
         <ImageButton
             android:id="@+id/btnClearHistory"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/clear_all"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_delete"
             android:tint="@color/danger" />
     </LinearLayout>
@@ -47,8 +55,10 @@
         android:id="@+id/txtEmpty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="48dp"
         android:gravity="center"
+        android:padding="24dp"
+        android:background="@drawable/glass_panel_soft"
         android:text="@string/history_empty"
         android:textColor="@color/muted"
         android:visibility="gone" />
@@ -58,7 +68,10 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingBottom="10dp"
         android:divider="@null"
-        android:dividerHeight="0dp" />
+        android:dividerHeight="0dp"
+        android:scrollbars="none" />
 </LinearLayout>

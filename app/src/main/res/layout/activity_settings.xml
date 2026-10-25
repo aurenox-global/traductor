@@ -1,37 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ajustes · ColorOS 17: cabecera limpia y tarjetas de cristal por sección. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg"
+    android:background="@android:color/transparent"
     android:fitsSystemWindows="true"
-    android:padding="12dp">
+    android:paddingHorizontal="16dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingVertical="4dp">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/settings"
-            android:src="@drawable/ic_swap"
+            android:padding="11dp"
             android:rotation="90"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_swap"
             android:tint="@color/on_panel" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="12dp"
             android:text="@string/settings"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
+            android:letterSpacing="-0.02"
             android:textColor="@color/on_panel" />
     </LinearLayout>
 
@@ -39,7 +46,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false"
+        android:paddingBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,131 +56,149 @@
             android:orientation="vertical">
 
             <!-- ===== Motor de traducción: NLLB-200 (ONNX). Único motor (sin LLM). ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/settings_mt_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/settings_nllb_desc"
-                android:textSize="12sp"
-                android:textColor="@color/muted" />
-
             <LinearLayout
-                android:id="@+id/containerNllb"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnImportNllb"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="@string/import_nllb" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_mt_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/settings_nllb_desc"
+                    android:textAppearance="@style/TextAppearance.Traductor.Caption" />
+
+                <LinearLayout
+                    android:id="@+id/containerNllb"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnImportNllb"
+                    style="@style/Widget.Traductor.Button.Outlined"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="@string/import_nllb" />
+            </LinearLayout>
 
             <!-- ===== Modelo de voz (Whisper) ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_asr_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
-
             <LinearLayout
-                android:id="@+id/containerAsr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnImportWhisper"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/import_whisper" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_asr_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
+
+                <LinearLayout
+                    android:id="@+id/containerAsr"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnImportWhisper"
+                    style="@style/Widget.Traductor.Button.Outlined"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/import_whisper" />
+            </LinearLayout>
 
             <!-- ===== VAD ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_vad_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
-
             <LinearLayout
-                android:id="@+id/containerVad"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_vad_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
+
+                <LinearLayout
+                    android:id="@+id/containerVad"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
 
             <!-- ===== Voz Piper (TTS neuronal offline) ===== -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_piper_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/settings_piper_desc"
-                android:textSize="12sp"
-                android:textColor="@color/muted" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/piper_download_hint"
-                android:textSize="11sp"
-                android:textColor="@color/muted" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switchPiper"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/piper_enabled"
-                android:textColor="@color/on_panel"
-                android:textSize="13sp" />
-
-            <LinearLayout
-                android:id="@+id/containerPiper"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="vertical">
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_piper_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/settings_piper_desc"
+                    android:textAppearance="@style/TextAppearance.Traductor.Caption" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/piper_download_hint"
+                    android:textSize="11sp"
+                    android:textColor="@color/muted" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchPiper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/piper_enabled"
+                    android:textColor="@color/on_panel"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/containerPiper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnImportPiper"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.Traductor.Button.Outlined"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:text="@string/import_piper" />
@@ -184,7 +211,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTestPiper"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.Traductor.Button.Outlined"
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
@@ -193,7 +220,7 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCancelPiper"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        style="@style/Widget.Traductor.Button.Outlined"
                         android:layout_width="0dp"
                         android:layout_weight="1"
                         android:layout_height="wrap_content"
@@ -204,96 +231,96 @@
             </LinearLayout>
 
             <!-- ===== Diagnóstico offline (seeding) ===== -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="28dp"
-                android:background="@color/panel_stroke" />
-
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_diag_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/settings_diag_desc"
-                android:textSize="12sp"
-                android:textColor="@color/muted" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_diag_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
 
-            <TextView
-                android:id="@+id/txtDiag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="10dp"
-                android:background="@color/panel"
-                android:fontFamily="monospace"
-                android:textIsSelectable="true"
-                android:textSize="14sp"
-                android:textColor="@color/on_panel" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/settings_diag_desc"
+                    android:textAppearance="@style/TextAppearance.Traductor.Caption" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDiagRefresh"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/settings_diag_refresh" />
+                <TextView
+                    android:id="@+id/txtDiag"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:padding="12dp"
+                    android:background="@drawable/glass_panel_soft"
+                    android:fontFamily="monospace"
+                    android:textIsSelectable="true"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_panel" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDiagRefresh"
+                    style="@style/Widget.Traductor.Button.Outlined"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="@string/settings_diag_refresh" />
+            </LinearLayout>
 
             <!-- ===== Acerca de / créditos ===== -->
-            <View
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="28dp"
-                android:background="@color/panel_stroke" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical"
+                android:background="@drawable/glass_panel"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_about_title"
+                    android:textAppearance="@style/TextAppearance.Traductor.Section" />
+
+                <TextView
+                    android:id="@+id/txtAboutApp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/app_name"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_panel" />
+
+                <TextView
+                    android:id="@+id/txtAboutVersion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="13sp"
+                    android:textColor="@color/muted" />
+
+                <TextView
+                    android:id="@+id/txtCredit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/on_panel" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/settings_about_title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/accent" />
-
-            <TextView
-                android:id="@+id/txtAboutApp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/app_name"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="@color/on_panel" />
-
-            <TextView
-                android:id="@+id/txtAboutVersion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textSize="13sp"
-                android:textColor="@color/muted" />
-
-            <TextView
-                android:id="@+id/txtCredit"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textSize="14sp"
-                android:textColor="@color/on_panel" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="4dp"
+                android:gravity="center"
                 android:text="@string/settings_footer_note"
                 android:textSize="12sp"
                 android:textColor="@color/muted" />
@@ -304,6 +331,7 @@
         android:id="@+id/txtSettingsStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:maxLines="2"
         android:textSize="12sp"
         android:textColor="@color/muted" />
@@ -314,5 +342,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="1000"
+        android:progressTint="@color/accent"
         android:visibility="gone" />
 </LinearLayout>

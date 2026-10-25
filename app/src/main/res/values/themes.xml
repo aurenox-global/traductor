@@ -1,21 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Traductor" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.Traductor" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent</item>
-        <item name="colorOnPrimary">#FF0B1020</item>
-        <item name="colorPrimaryContainer">#FF28374A</item>
+        <item name="colorOnPrimary">#FFFFFFFF</item>
+        <item name="colorPrimaryContainer">@color/accent_soft</item>
         <item name="colorOnPrimaryContainer">@color/on_panel</item>
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorSurface">@color/panel</item>
+        <item name="colorSecondary">@color/accent2</item>
+        <item name="colorSurface">@color/panel_strong</item>
         <item name="colorOnSurface">@color/on_panel</item>
-        <item name="colorSurfaceVariant">@color/panel_stroke</item>
+        <item name="colorSurfaceVariant">@color/panel_soft</item>
         <item name="colorOnSurfaceVariant">@color/muted</item>
         <item name="colorOutline">@color/panel_stroke</item>
+        <item name="colorSurfaceContainerHigh">@color/panel_strong</item>
+        <item name="colorSurfaceContainer">@color/panel_strong</item>
+        <item name="colorSurfaceContainerLow">@color/panel_strong</item>
+        <item name="colorSurfaceContainerLowest">@color/panel_strong</item>
+        <item name="colorSurfaceContainerHighest">@color/panel_strong</item>
+        <item name="colorSurfaceDim">@color/bg</item>
+        <item name="colorSurfaceBright">@color/panel_strong</item>
+        <item name="elevationOverlayEnabled">false</item>
         <item name="android:colorBackground">@color/bg</item>
-        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:windowBackground">@drawable/bg_gradient</item>
         <item name="android:textColorPrimary">@color/on_panel</item>
         <item name="android:textColorSecondary">@color/muted</item>
-        <item name="android:statusBarColor">@color/bg</item>
-        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/window_light_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/window_light_bars</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Traductor.Dialog</item>
+        <item name="materialButtonStyle">@style/Widget.Traductor.Button</item>
+    </style>
+
+    <style name="ThemeOverlay.Traductor.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">#FFFFFFFF</item>
+        <item name="colorSurfaceContainerHigh">@color/panel_strong</item>
+        <item name="colorSurfaceContainer">@color/panel_strong</item>
+        <item name="colorSurfaceContainerLow">@color/panel_strong</item>
+        <item name="colorSurfaceContainerLowest">@color/panel_strong</item>
+        <item name="colorSurfaceContainerHighest">@color/panel_strong</item>
+        <item name="colorSurfaceDim">@color/bg</item>
+        <item name="colorSurfaceBright">@color/panel_strong</item>
+        <item name="elevationOverlayEnabled">false</item>
+
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Traductor.Dialog</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="ShapeAppearance.Traductor.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="Widget.Traductor.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">26dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="Widget.Traductor.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">24dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textColor">@color/accent</item>
+        <item name="strokeColor">@color/panel_stroke</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.Traductor.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/on_panel</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.Traductor.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="TextAppearance.Traductor.Label" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.14</item>
     </style>
 </resources>

@@ -1,67 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ColorOS 17 · Aquamorphic: cristal, esquinas 28dp y degradado aqua. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg"
+    android:background="@android:color/transparent"
     android:fitsSystemWindows="true"
-    android:padding="12dp">
+    android:paddingHorizontal="16dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="10dp">
 
-    <!-- ===== Barra superior: idioma origen / swap / idioma destino / ajustes ===== -->
+    <!-- ===== Cabecera ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingVertical="4dp">
+
+        <FrameLayout
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:background="@drawable/logo_bg"
+            android:elevation="6dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/ic_translate" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/on_panel"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.02" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:text="@string/tagline"
+                android:textColor="@color/muted"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/icon_btn_bg"
+            android:contentDescription="@string/cd_settings"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_settings"
+            android:tint="@color/on_panel" />
+    </LinearLayout>
+
+    <!-- ===== Idiomas ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/glass_panel"
+        android:padding="8dp">
 
         <TextView
             android:id="@+id/btnSourceLang"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/panel_bg"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="12dp"
+            android:background="@drawable/pill_lang"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="13dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textSize="15sp"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:textColor="@color/on_panel"
             android:text="@string/detect_language" />
 
         <ImageButton
             android:id="@+id/btnSwap"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginHorizontal="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="@drawable/btn_swap_circle"
             android:contentDescription="@string/cd_swap"
+            android:padding="14dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_swap"
-            android:tint="@color/accent" />
+            android:tint="#FFFFFFFF" />
 
         <TextView
             android:id="@+id/btnTargetLang"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/panel_bg"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="12dp"
+            android:background="@drawable/pill_lang"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="13dp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textSize="15sp"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:textColor="@color/on_panel"
             android:text="Español" />
-
-        <ImageButton
-            android:id="@+id/btnSettings"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/cd_settings"
-            android:src="@drawable/ic_settings"
-            android:tint="@color/on_panel" />
     </LinearLayout>
 
     <!-- ===== Panel de entrada ===== -->
@@ -69,22 +130,52 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="vertical"
-        android:background="@drawable/panel_bg"
-        android:padding="10dp">
+        android:background="@drawable/glass_panel"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_accent" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="@string/input_label"
+                android:textAppearance="@style/TextAppearance.Traductor.Label" />
+
+            <TextView
+                android:id="@+id/txtCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/muted" />
+        </LinearLayout>
 
         <EditText
             android:id="@+id/editInput"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:layout_marginTop="6dp"
+            android:minHeight="88dp"
             android:background="@null"
             android:gravity="top|start"
             android:hint="@string/input_hint"
             android:textColorHint="@color/muted"
             android:textColor="@color/on_panel"
-            android:textSize="18sp"
+            android:textSize="19sp"
+            android:lineSpacingExtra="4dp"
             android:inputType="textMultiLine|textCapSentences"
             android:imeOptions="actionNone|flagNoExtractUi"
             android:scrollbars="vertical" />
@@ -94,127 +185,148 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginTop="2dp">
+            android:layout_marginTop="4dp">
 
             <ImageButton
                 android:id="@+id/btnMic"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_mic"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_mic"
                 android:tint="@color/accent" />
 
             <ImageButton
                 android:id="@+id/btnCamera"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_camera"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_camera"
-                android:tint="@color/accent" />
+                android:tint="@color/on_panel" />
 
             <ImageButton
                 android:id="@+id/btnSpeakInput"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_speak"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_speaker"
                 android:tint="@color/on_panel" />
 
             <ImageButton
                 android:id="@+id/btnPaste"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_paste"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_paste"
                 android:tint="@color/on_panel" />
 
             <ImageButton
                 android:id="@+id/btnCopyInput"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_copy"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_copy"
                 android:tint="@color/on_panel" />
 
-            <TextView
-                android:id="@+id/txtCount"
+            <View
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="end"
-                android:textSize="12sp"
-                android:textColor="@color/muted" />
+                android:layout_height="1dp"
+                android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btnClearInput"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_clear"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_clear"
-                android:tint="@color/muted" />
+                android:tint="@color/danger" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- ===== Fila de acciones ===== -->
+    <!-- ===== Acciones ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="12dp">
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnTranslate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_primary"
+            android:elevation="6dp"
+            android:stateListAnimator="@null"
             android:text="@string/translate"
-            android:textColor="@color/bg"
-            app:backgroundTint="@color/accent"
-            app:cornerRadius="24dp" />
+            android:textAllCaps="false"
+            android:textColor="#FFFFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
 
         <ProgressBar
             android:id="@+id/progressTranslate"
             style="?android:attr/progressBarStyleSmall"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:layout_marginStart="10dp"
             android:visibility="gone" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
         <ImageButton
             android:id="@+id/btnHistory"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/cd_history"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_history"
             android:tint="@color/on_panel" />
 
         <ImageButton
             android:id="@+id/btnClearAll"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/clear_all"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_delete"
-            android:tint="@color/on_panel" />
+            android:tint="@color/danger" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/txtStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
         android:maxLines="2"
         android:ellipsize="end"
         android:textSize="12sp"
@@ -226,7 +338,9 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
         android:max="1000"
+        android:progressTint="@color/accent"
         android:visibility="gone" />
 
     <!-- ===== Panel de traducción ===== -->
@@ -234,22 +348,44 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="4dp"
         android:orientation="vertical"
-        android:background="@drawable/panel_bg"
-        android:padding="10dp">
+        android:background="@drawable/glass_panel_soft"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/dot_accent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/output_label"
+                android:textAppearance="@style/TextAppearance.Traductor.Label" />
+        </LinearLayout>
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:layout_marginTop="6dp"
             android:fillViewport="true">
 
             <TextView
                 android:id="@+id/txtOutput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
+                android:textSize="19sp"
+                android:lineSpacingExtra="4dp"
                 android:textColor="@color/on_panel"
                 android:textIsSelectable="true"
                 android:text="@string/output_hint" />
@@ -260,23 +396,28 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginTop="2dp">
+            android:layout_marginTop="6dp">
 
             <ImageButton
                 android:id="@+id/btnSpeakOutput"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_speak"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_speaker"
                 android:tint="@color/accent" />
 
             <ImageButton
                 android:id="@+id/btnCopyOutput"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/icon_btn_bg"
                 android:contentDescription="@string/cd_copy"
+                android:padding="9dp"
+                android:scaleType="fitCenter"
                 android:src="@drawable/ic_copy"
                 android:tint="@color/on_panel" />
 
@@ -292,7 +433,7 @@
                 android:checked="true"
                 android:text="@string/auto_tts"
                 android:textColor="@color/muted"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 

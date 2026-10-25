@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/panel_bg"
-    android:layout_marginTop="8dp"
-    android:padding="12dp">
+    android:background="@drawable/glass_panel_soft"
+    android:layout_marginTop="10dp"
+    android:padding="14dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,32 +20,40 @@
             android:layout_weight="1"
             android:maxLines="3"
             android:textSize="14sp"
-            android:textColor="@color/on_panel" />
+            android:textColor="@color/muted" />
 
         <ImageButton
             android:id="@+id/histSpeak"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/cd_speak"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_speaker"
             android:tint="@color/accent" />
 
         <ImageButton
             android:id="@+id/histCopy"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/cd_copy"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_copy"
             android:tint="@color/on_panel" />
 
         <ImageButton
             android:id="@+id/histUse"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/icon_btn_bg"
             android:contentDescription="@string/settings_use"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_import"
             android:tint="@color/on_panel" />
     </LinearLayout>
@@ -54,16 +62,18 @@
         android:id="@+id/histTranslated"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textSize="15sp"
+        android:layout_marginTop="8dp"
+        android:textSize="16sp"
         android:textStyle="bold"
+        android:lineSpacingExtra="2dp"
         android:textColor="@color/accent" />
 
     <TextView
         android:id="@+id/histMeta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="6dp"
         android:textSize="11sp"
+        android:letterSpacing="0.02"
         android:textColor="@color/muted" />
 </LinearLayout>
