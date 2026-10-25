@@ -39,14 +39,14 @@ android {
         targetSdk = 35
         // Variante NLLB puro: versión propia por variante (LITE-OCR / FULL / normal).
         versionCode = when {
-            bundled -> 211
-            ocrbundle -> 210
-            else -> 203
+            bundled -> 216
+            ocrbundle -> 215
+            else -> 215
         }
         versionName = when {
-            bundled -> "1.0-nllb-full"
-            ocrbundle -> "1.0-nllb-lite"
-            else -> "1.1-coloros"
+            bundled -> "1.2.1-full"
+            ocrbundle -> "1.2.1-lite-ocr"
+            else -> "1.2.1"
         }
 
         ndk {

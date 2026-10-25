@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ColorOS 17 · Aquamorphic: cristal, esquinas 28dp y degradado aqua. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@android:color/transparent"
     android:fitsSystemWindows="true"
-    android:paddingHorizontal="16dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="10dp">
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="10dp">
 
     <!-- ===== Cabecera ===== -->
     <LinearLayout
@@ -128,8 +135,8 @@
     <!-- ===== Panel de entrada ===== -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:minHeight="220dp"
         android:layout_marginTop="12dp"
         android:orientation="vertical"
         android:background="@drawable/glass_panel"
@@ -165,10 +172,9 @@
         <EditText
             android:id="@+id/editInput"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:minHeight="120dp"
             android:layout_marginTop="6dp"
-            android:minHeight="88dp"
             android:background="@null"
             android:gravity="top|start"
             android:hint="@string/input_hint"
@@ -346,8 +352,9 @@
     <!-- ===== Panel de traducción ===== -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="220dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="4dp"
         android:orientation="vertical"
@@ -373,23 +380,17 @@
                 android:textAppearance="@style/TextAppearance.Traductor.Label" />
         </LinearLayout>
 
-        <ScrollView
+        <TextView
+            android:id="@+id/txtOutput"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:fillViewport="true">
-
-            <TextView
-                android:id="@+id/txtOutput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="19sp"
+            android:minHeight="140dp"
+            android:textSize="19sp"
                 android:lineSpacingExtra="4dp"
                 android:textColor="@color/on_panel"
                 android:textIsSelectable="true"
                 android:text="@string/output_hint" />
-        </ScrollView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -438,3 +439,4 @@
     </LinearLayout>
 
 </LinearLayout>
+</ScrollView>
